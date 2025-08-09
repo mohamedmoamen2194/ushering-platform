@@ -33,6 +33,8 @@ export default function RegisterPage() {
     phone: "",
     name: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     // Usher specific
     skills: [] as string[],
     experienceYears: "",
@@ -60,8 +62,21 @@ export default function RegisterPage() {
     setSuccess("")
 
     // Basic validation
-    if (!formData.phone || !formData.name) {
+    if (!formData.phone || !formData.name || !formData.password || !formData.confirmPassword) {
       setError(language === "ar" ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill in all required fields")
+      setIsLoading(false)
+      return
+    }
+
+    // Password validation
+    if (formData.password !== formData.confirmPassword) {
+      setError(language === "ar" ? "كلمات المرور غير متطابقة" : "Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError(language === "ar" ? "كلمة المرور يجب أن تكون 8 أحرف على الأقل" : "Password must be at least 8 characters long")
       setIsLoading(false)
       return
     }
@@ -74,8 +89,9 @@ export default function RegisterPage() {
 
     try {
       console.log("Calling register function...")
+      const { confirmPassword, ...registrationData } = formData
       const success = await register({
-        ...formData,
+        ...registrationData,
         role,
         language,
       })
@@ -166,7 +182,7 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-bold text-gray-900">Aura</h1>
           </Link>
           <div className="flex justify-center">
-            <LanguageSwitcher currentLanguage={language} onLanguageChange={setLanguage} />
+            <LanguageSwitcher />
           </div>
         </div>
 
@@ -278,6 +294,32 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{language === "ar" ? "كلمة المرور" : "Password"} *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      placeholder={language === "ar" ? "8 أحرف على الأقل" : "At least 8 characters"}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{language === "ar" ? "تأكيد كلمة المرور" : "Confirm Password"} *</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      placeholder={language === "ar" ? "أعد إدخال كلمة المرور" : "Re-enter password"}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
