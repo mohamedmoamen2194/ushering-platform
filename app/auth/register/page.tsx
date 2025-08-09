@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslation } from "@/lib/i18n"
+import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { Phone, ArrowRight, Upload, Building, User, AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -20,13 +21,13 @@ export default function RegisterPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { register } = useAuth()
-  const [language, setLanguage] = useState<"ar" | "en">("ar")
+  const { language, isRTL } = useLanguage()
   const [role, setRole] = useState<"usher" | "brand">("usher")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [uploadedFile, setUploadedFile] = useState<string | null>(null)
-  const { t, isRTL } = useTranslation(language)
+  const { t } = useTranslation(language)
 
   // Form states
   const [formData, setFormData] = useState({
