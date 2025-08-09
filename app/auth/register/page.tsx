@@ -27,6 +27,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [uploadedFile, setUploadedFile] = useState<string | null>(null)
+  const [passwordStrength, setPasswordStrength] = useState<{ score: number; feedback: string[]; isStrong: boolean }>({ score: 0, feedback: [], isStrong: false })
   const { t } = useTranslation(language)
 
   // Form states
@@ -54,6 +55,41 @@ export default function RegisterPage() {
     }
   }, [searchParams])
 
+  // Add password strength checking function
+  const checkPasswordStrength = (password: string) => {
+    const feedback: string[] = []
+    let score = 0
+
+    // Length check
+    if (password.length >= 8) score += 1
+    else feedback.push(language === "ar" ? "يجب أن تكون كلمة المرور 8 أحرف على الأقل" : "Password should be at least 8 characters long")
+
+    // Contains lowercase
+    if (/[a-z]/.test(password)) score += 1
+    else feedback.push(language === "ar" ? "يجب أن تحتوي على أحرف صغيرة" : "Password should contain lowercase letters")
+
+    // Contains uppercase
+    if (/[A-Z]/.test(password)) score += 1
+    else feedback.push(language === "ar" ? "يجب أن تحتوي على أحرف كبيرة" : "Password should contain uppercase letters")
+
+    // Contains numbers
+    if (/\d/.test(password)) score += 1
+    else feedback.push(language === "ar" ? "يجب أن تحتوي على أرقام" : "Password should contain numbers")
+
+    // Contains special characters
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1
+    else feedback.push(language === "ar" ? "يجب أن تحتوي على رموز خاصة (!@#$%^&*)" : "Password should contain special characters (!@#$%^&*)")
+
+    const strength = {
+      score,
+      feedback,
+      isStrong: score >= 4
+    }
+    
+    setPasswordStrength(strength)
+    return strength
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Form submitted with data:", { ...formData, role, language })
@@ -76,8 +112,13 @@ export default function RegisterPage() {
       return
     }
 
-    if (formData.password.length < 8) {
-      setError(language === "ar" ? "كلمة المرور يجب أن تكون 8 أحرف على الأقل" : "Password must be at least 8 characters long")
+    // Check password strength
+    const strength = checkPasswordStrength(formData.password)
+    if (!strength.isStrong) {
+      setError(language === "ar" ? 
+        `كلمة المرور ضعيفة. ${strength.feedback.join("، ")}` : 
+        `Password is too weak. ${strength.feedback.join(", ")}`
+      )
       setIsLoading(false)
       return
     }
@@ -119,6 +160,11 @@ export default function RegisterPage() {
   const handleInputChange = (field: string, value: string) => {
     console.log(`Updating ${field} to:`, value)
     setFormData((prev) => ({ ...prev, [field]: value }))
+    
+    // Check password strength when password changes
+    if (field === "password") {
+      checkPasswordStrength(value)
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -305,9 +351,46 @@ export default function RegisterPage() {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
-                      placeholder={language === "ar" ? "8 أحرف على الأقل" : "At least 8 characters"}
+                      placeholder={language === "ar" ? "مزيج من الأحرف والأرقام والرموز" : "Mix of letters, numbers & symbols"}
                       required
                     />
+                    {formData.password && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <div
+                                key={i}
+                                className={`h-1 w-4 rounded ${
+                                  i <= passwordStrength.score
+                                    ? passwordStrength.score >= 4
+                                      ? "bg-green-500"
+                                      : passwordStrength.score >= 3
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
+                                    : "bg-gray-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className={`text-xs ${
+                            passwordStrength.isStrong ? "text-green-600" : "text-red-600"
+                          }`}>
+                            {passwordStrength.isStrong 
+                              ? (language === "ar" ? "قوية" : "Strong")
+                              : (language === "ar" ? "ضعيفة" : "Weak")
+                            }
+                          </span>
+                        </div>
+                        {!passwordStrength.isStrong && passwordStrength.feedback.length > 0 && (
+                          <div className="text-xs text-red-600 space-y-1">
+                            {passwordStrength.feedback.map((item, index) => (
+                              <div key={index}>• {item}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
