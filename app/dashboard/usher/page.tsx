@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
+import { ProtectedRoute } from "@/components/protected-route"
 
 export default function UsherDashboard() {
   const { user, logout } = useAuth()
@@ -66,20 +67,13 @@ export default function UsherDashboard() {
   }
 
   useEffect(() => {
-    if (!user) {
-      router.push("/auth/login")
-      return
+    // Only fetch data when user is available
+    if (user) {
+      fetchGigs()
+      fetchUserStats()
+      fetchAppliedGigs()
     }
-
-    if (user.role !== "usher") {
-      router.push(`/dashboard/${user.role}`)
-      return
-    }
-
-    fetchGigs()
-    fetchUserStats()
-    fetchAppliedGigs()
-  }, [user, router])
+  }, [user])
 
   const handleApply = async (gigId: number) => {
     try {
@@ -132,7 +126,8 @@ export default function UsherDashboard() {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+    <ProtectedRoute requiredRole="usher">
+      <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -346,5 +341,6 @@ export default function UsherDashboard() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }

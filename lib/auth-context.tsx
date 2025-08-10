@@ -30,26 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user data on mount
+    // Validate stored session on mount
     const initializeAuth = () => {
-      try {
-        const storedUser = localStorage.getItem("aura_user")
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser)
-          console.log("Restored user from localStorage:", parsedUser)
-          setUser(parsedUser)
-        }
-      } catch (error) {
-        console.error("Error parsing stored user data:", error)
-        localStorage.removeItem("aura_user")
-      } finally {
-        setLoading(false)
-      }
+      validateSession()
     }
 
-    // Small delay to ensure localStorage is available
-    const timer = setTimeout(initializeAuth, 100)
-    return () => clearTimeout(timer)
+    // Use requestIdleCallback if available, otherwise use setTimeout
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      requestIdleCallback(initializeAuth, { timeout: 1000 })
+    } else {
+      // Fallback for browsers that don't support requestIdleCallback
+      const timer = setTimeout(initializeAuth, 100)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   const login = async (phone: string, password?: string): Promise<boolean> => {
@@ -126,6 +119,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setUserData = (userData: User) => {
     setUser(userData)
     localStorage.setItem("aura_user", JSON.stringify(userData))
+  }
+
+  // Validate stored session on mount
+  const validateSession = async () => {
+    try {
+      const storedUser = localStorage.getItem("aura_user")
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser)
+        
+        // Make a quick API call to validate the session
+        const response = await fetch("/api/auth/validate-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: parsedUser.id }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.valid) {
+            setUser(parsedUser)
+          } else {
+            // Session expired, clear storage
+            localStorage.removeItem("aura_user")
+          }
+        } else {
+          // API error, clear storage to be safe
+          localStorage.removeItem("aura_user")
+        }
+      }
+    } catch (error) {
+      console.error("Session validation error:", error)
+      localStorage.removeItem("aura_user")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const isAuthenticated = !!user

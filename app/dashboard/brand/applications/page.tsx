@@ -26,6 +26,7 @@ import {
   Mail,
 } from "lucide-react"
 import Link from "next/link"
+import { ProtectedRoute } from "@/components/protected-route"
 
 interface Application {
   id: number
@@ -56,18 +57,11 @@ export default function ApplicationsPage() {
   const { t } = useTranslation(language)
 
   useEffect(() => {
-    if (!user) {
-      router.push("/auth/login")
-      return
+    // Only fetch data when user is available
+    if (user) {
+      fetchApplications()
     }
-
-    if (user.role !== "brand") {
-      router.push(`/dashboard/${user.role}`)
-      return
-    }
-
-    fetchApplications()
-  }, [user, router, statusFilter])
+  }, [user, statusFilter])
 
   const fetchApplications = async () => {
     setLoading(true)
@@ -203,7 +197,8 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+    <ProtectedRoute requiredRole="brand">
+      <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -449,5 +444,6 @@ export default function ApplicationsPage() {
         )}
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
