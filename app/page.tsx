@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { Users, Briefcase, FileText, TrendingUp, Star, MapPin, Clock, ArrowRight, CheckCircle } from 'lucide-react'
@@ -68,16 +69,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-custom-black dark:to-custom-navy ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-custom-navy shadow-sm dark:shadow-custom-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-custom-gold dark:to-amber-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">A</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Aura</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Aura</h1>
               {stats?.isDemo && (
                 <Badge variant="secondary" className="ml-2">
                   {language === "ar" ? "وضع التجربة" : "Demo Mode"}
@@ -85,6 +86,7 @@ export default function HomePage() {
               )}
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <LanguageSwitcher />
               <Link href="/auth/login">
                 <Button variant="outline">
@@ -104,10 +106,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             {language === "ar" ? "منصة أورا للضيافة" : "Aura Hospitality Platform"}
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
             {language === "ar" 
               ? "اربط العلامات التجارية مع المضيفين المحترفين لتجارب استثنائية في الفعاليات والمناسبات"
               : "Connect brands with professional ushers for exceptional event experiences"
@@ -130,14 +132,14 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-custom-navy">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               {language === "ar" ? "إحصائيات المنصة" : "Platform Statistics"}
             </h2>
             {error && (
-              <p className="text-red-600 mb-4">
+              <p className="text-red-600 dark:text-red-400 mb-4">
                 {language === "ar" ? "خطأ في تحميل الإحصائيات" : "Error loading statistics"}
               </p>
             )}
@@ -212,7 +214,7 @@ export default function HomePage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               {language === "ar" ? "لماذا تختار أورا؟" : "Why Choose Aura?"}
             </h2>
           </div>
@@ -228,7 +230,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {language === "ar" 
                     ? "مضيفون مدربون ومؤهلون لتقديم أفضل تجربة ضيافة"
                     : "Trained and qualified ushers for the best hospitality experience"
@@ -247,7 +249,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {language === "ar" 
                     ? "خدماتنا متاحة في جميع أنحاء مصر"
                     : "Our services are available throughout Egypt"
@@ -266,7 +268,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {language === "ar" 
                     ? "احجز مضيفيك في دقائق معدودة"
                     : "Book your ushers in just a few minutes"
@@ -297,7 +299,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/auth/register?role=brand">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                 {language === "ar" ? "سجل كعلامة تجارية" : "Register as Brand"}
               </Button>
             </Link>
@@ -306,80 +308,78 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-gray-900 dark:bg-black text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">A</span>
-                </div>
-                <h3 className="text-xl font-bold">Aura</h3>
-              </div>
-              <p className="text-gray-400">
-                {language === "ar" 
-                  ? "منصة الضيافة الرائدة في مصر"
-                  : "Egypt's leading hospitality platform"
-                }
-              </p>
-            </div>
-            
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center">
+            <div className="text-center md:text-left">
               <h4 className="font-semibold mb-4">
                 {language === "ar" ? "للمضيفين" : "For Ushers"}
               </h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="/auth/register?role=usher" className="hover:text-white">
+                  <Link href="/auth/register?role=usher" className="hover:text-white transition-colors">
                     {language === "ar" ? "انضم كمضيف" : "Join as Usher"}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/usher" className="hover:text-white">
+                  <Link href="/dashboard/usher" className="hover:text-white transition-colors">
                     {language === "ar" ? "لوحة التحكم" : "Dashboard"}
                   </Link>
                 </li>
               </ul>
             </div>
             
-            <div>
+            <div className="text-center md:text-left">
               <h4 className="font-semibold mb-4">
                 {language === "ar" ? "للعلامات التجارية" : "For Brands"}
               </h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="/auth/register?role=brand" className="hover:text-white">
+                  <Link href="/auth/register?role=brand" className="hover:text-white transition-colors">
                     {language === "ar" ? "انضم كعلامة تجارية" : "Join as Brand"}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/brand" className="hover:text-white">
+                  <Link href="/dashboard/brand" className="hover:text-white transition-colors">
                     {language === "ar" ? "لوحة التحكم" : "Dashboard"}
                   </Link>
                 </li>
               </ul>
             </div>
             
-            <div>
+            <div className="text-center md:text-left">
               <h4 className="font-semibold mb-4">
-                {language === "ar" ? "الدعم" : "Support"}
+                {language === "ar" ? "المنصة" : "Platform"}
               </h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="/setup" className="hover:text-white">
-                    {language === "ar" ? "الإعداد" : "Setup"}
+                  <Link href="/" className="hover:text-white transition-colors">
+                    {language === "ar" ? "الرئيسية" : "Home"}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/debug" className="hover:text-white">
-                    {language === "ar" ? "التشخيص" : "Debug"}
+                  <Link href="/auth/login" className="hover:text-white transition-colors">
+                    {language === "ar" ? "تسجيل الدخول" : "Login"}
                   </Link>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="text-center md:text-left">
+              <h4 className="font-semibold mb-4">
+                {language === "ar" ? "تواصل معنا" : "Contact"}
+              </h4>
+              <ul className="space-y-2 text-gray-400">
+                <li>
+                  <a href="mailto:mohamedmoamen1230@gmail.com" className="hover:text-white transition-colors">
+                    Email
+                  </a>
                 </li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+          <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2024 Aura. {language === "ar" ? "جميع الحقوق محفوظة" : "All rights reserved"}.</p>
           </div>
         </div>

@@ -27,25 +27,44 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    /* Custom Dark Theme Colors */
+    --background: 0 0% 0%; /* #000000 - Pure Black */
+    --foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Card Colors */
+    --card: 240 30% 14%; /* #1A1A2E - Deep Navy Blue */
+    --card-foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Popover Colors */
+    --popover: 240 30% 14%; /* #1A1A2E - Deep Navy Blue */
+    --popover-foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Primary Colors - Golden Orange */
+    --primary: 35 100% 47%; /* #F0A500 - Golden Orange */
+    --primary-foreground: 0 0% 0%; /* #000000 - Pure Black */
+    
+    /* Secondary Colors - Deep Navy Blue */
+    --secondary: 240 30% 14%; /* #1A1A2E - Deep Navy Blue */
+    --secondary-foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Muted Colors */
+    --muted: 240 30% 14%; /* #1A1A2E - Deep Navy Blue */
+    --muted-foreground: 0 0% 65%; /* Slightly darker gray for muted text */
+    
+    /* Accent Colors */
+    --accent: 240 30% 14%; /* #1A1A2E - Deep Navy Blue */
+    --accent-foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Destructive Colors - Warm Red */
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 92%; /* #EAEAEA - Light Gray */
+    
+    /* Border and Input Colors */
+    --border: 240 30% 18%; /* Slightly lighter navy for borders */
+    --input: 240 30% 18%; /* Slightly lighter navy for inputs */
+    
+    /* Ring Color - Golden Orange Glow */
+    --ring: 35 100% 47%; /* #F0A500 - Golden Orange */
   }
 }
 

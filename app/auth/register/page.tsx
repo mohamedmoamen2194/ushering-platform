@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -216,19 +217,20 @@ export default function RegisterPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
+      className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Aura</h1>
+                          <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
+              </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Aura</h1>
           </Link>
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-4">
+            <ThemeToggle />
             <LanguageSwitcher />
           </div>
         </div>

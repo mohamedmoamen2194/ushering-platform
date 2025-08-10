@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Phone, Lock, Eye, EyeOff, ChevronDown } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
@@ -190,25 +191,25 @@ export default function LoginPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
+      className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-custom-black dark:to-custom-navy flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">A</span>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {language === "ar" ? "مرحباً بك في منصة أورا" : "Welcome to Aura Platform"}
           </h1>
-          <p className="text-gray-600">
-            {language === "ar" 
-              ? "منصة التوظيف الرائدة في منطقة الشرق الأوسط وشمال أفريقيا"
-              : "Leading staffing platform in MENA region"
-            }
-          </p>
         </div>
 
-        {/* Language Switcher */}
-        <div className="flex justify-center mb-6">
+        {/* Language Switcher and Theme Toggle */}
+        <div className="flex justify-center items-center gap-4 mb-6">
+          <ThemeToggle />
           <LanguageSwitcher />
         </div>
 

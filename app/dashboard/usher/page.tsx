@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GigCard } from "@/components/gig-card"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -127,22 +128,23 @@ export default function UsherDashboard() {
 
   return (
     <ProtectedRoute requiredRole="usher">
-      <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
-      <header className="bg-white shadow-sm">
+      <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+      <header className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">A</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   {language === "ar" ? `مرحباً، ${user.name}` : `Welcome, ${user.name}`}
                 </h1>
-                <p className="text-sm text-gray-600">{language === "ar" ? "لوحة تحكم المضيف" : "Usher Dashboard"}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{language === "ar" ? "لوحة تحكم المضيف" : "Usher Dashboard"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Button variant="ghost" size="sm">
                 <Bell className="h-4 w-4" />
               </Button>
@@ -198,17 +200,17 @@ export default function UsherDashboard() {
 
         {appliedGigs.length > 0 && (
           <div className="space-y-6 mb-8">
-            <h2 className="text-xl font-semibold">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
             <div className="grid gap-4">
               {appliedGigs.map((application: any) => (
                 <Card key={application.id} className="border-l-4 border-l-blue-500">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="font-semibold">{application.gig_title}</h4>
-                        <p className="text-sm text-gray-600 mb-1">{application.gig_location}</p>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{application.gig_title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{application.gig_location}</p>
                         
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-2">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {application.duration_hours}h {language === "ar" ? "يومياً" : "daily"}
@@ -219,13 +221,13 @@ export default function UsherDashboard() {
                           </span>
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                           {application.start_date && application.end_date
                             ? `${new Date(application.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(application.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
                             : formatDate(application.gig_datetime)}
                         </p>
 
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {language === "ar" ? "تقدمت في:" : "Applied on:"}{" "}
                           {new Date(application.applied_at).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
                         </p>
@@ -293,7 +295,7 @@ export default function UsherDashboard() {
 
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">{language === "ar" ? "الوظائف المتاحة" : "Available Gigs"}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{language === "ar" ? "الوظائف المتاحة" : "Available Gigs"}</h2>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 <Search className="h-4 w-4 mr-2" />
@@ -309,15 +311,15 @@ export default function UsherDashboard() {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p>{language === "ar" ? "جاري التحميل..." : "Loading..."}</p>
+              <p className="text-gray-900 dark:text-white">{language === "ar" ? "جاري التحميل..." : "Loading..."}</p>
             </div>
           ) : gigs.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {language === "ar" ? "لا توجد وظائف متاحة حالياً" : "No gigs available at the moment"}
                 </p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
                   {language === "ar"
                     ? "سيتم إخفاء الوظائف التي تم قبولك فيها من هذه القائمة"
                     : "Gigs you've been approved for are hidden from this list"}
@@ -326,7 +328,7 @@ export default function UsherDashboard() {
             </Card>
           ) : (
             <div className="space-y-4">
-              <div className="text-sm text-gray-600 mb-4">
+              <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 {language === "ar"
                   ? `عرض ${gigs.length} وظيفة متاحة • الوظائف المقبولة مخفية`
                   : `Showing ${gigs.length} available gigs • Approved gigs are hidden`}

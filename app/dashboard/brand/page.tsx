@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -85,23 +86,22 @@ export default function BrandDashboard() {
     }
   }
 
-  // Update the handleCreateGig function to handle both old and new schema
-  const handleCreateGig = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      // Prepare the data based on what's available
-      const gigData = {
-        ...newGig,
-        brandId: user?.id,
-        duration_hours: Number.parseInt(newGig.duration_hours),
-        pay_rate: Number.parseFloat(newGig.pay_rate),
-        total_ushers_needed: Number.parseInt(newGig.total_ushers_needed),
-      }
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
 
+  const handleCreateGig = async () => {
+    try {
       const response = await fetch("/api/gigs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(gigData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...newGig,
+          brand_id: user?.id,
+        }),
       })
 
       if (response.ok) {
@@ -120,45 +120,40 @@ export default function BrandDashboard() {
           is_recurring: false,
         })
         fetchGigs()
-        fetchBrandStats() // Refresh stats
       }
     } catch (error) {
       console.error("Failed to create gig:", error)
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    router.push("/")
-  }
-
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
   }
 
   return (
     <ProtectedRoute requiredRole="brand">
-      <div className={`min-h-screen bg-gray-50 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+      <div className={`min-h-screen bg-background ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
         {/* Header */}
-        <header className="bg-white shadow-sm">
+        <header className="bg-card shadow-sm border-b border-border">
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-custom-gold dark:to-amber-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">A</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{user.profile?.company_name || user.name}</h1>
-                  <p className="text-sm text-gray-600">
+                  <h1 className="text-xl font-bold text-card-foreground">{user.profile?.company_name || user.name}</h1>
+                  <p className="text-sm text-muted-foreground">
                     {language === "ar" ? "لوحة تحكم العلامة التجارية" : "Brand Dashboard"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <ThemeToggle />
                 <Link href="/dashboard/brand/applications">
                   <Button variant="ghost" size="sm">
                     <FileText className="h-4 w-4 mr-2" />
@@ -181,15 +176,15 @@ export default function BrandDashboard() {
         <div className="container mx-auto px-4 py-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-card-foreground">
                   {language === "ar" ? "رصيد المحفظة" : "Wallet Balance"}
                 </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-card-foreground">
                   {stats.walletBalance} {language === "ar" ? "ج.م" : "EGP"}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -198,28 +193,28 @@ export default function BrandDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-card-foreground">
                   {language === "ar" ? "الوظائف النشطة" : "Active Gigs"}
                 </CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.activeGigs}</div>
+                <div className="text-2xl font-bold text-card-foreground">{stats.activeGigs}</div>
                 <p className="text-xs text-muted-foreground">{language === "ar" ? "تحتاج مضيفين" : "Need ushers"}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-card-foreground">
                   {language === "ar" ? "إجمالي المضيفين" : "Total Ushers"}
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUshersHired}</div>
+                <div className="text-2xl font-bold text-card-foreground">{stats.totalUshersHired}</div>
                 <p className="text-xs text-muted-foreground">{language === "ar" ? "مضيف معتمد" : "Hired ushers"}</p>
               </CardContent>
             </Card>
@@ -228,15 +223,15 @@ export default function BrandDashboard() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <Link href="/dashboard/brand/applications">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow bg-card border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{language === "ar" ? "إدارة الطلبات" : "Manage Applications"}</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="font-semibold text-card-foreground">{language === "ar" ? "إدارة الطلبات" : "Manage Applications"}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {language === "ar" ? "مراجعة طلبات المضيفين" : "Review usher applications"}
                       </p>
                     </div>
@@ -245,192 +240,176 @@ export default function BrandDashboard() {
               </Card>
             </Link>
 
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowCreateGig(true)}>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Plus className="h-6 w-6 text-green-600" />
+            <Dialog open={showCreateGig} onOpenChange={setShowCreateGig}>
+              <DialogTrigger asChild>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow bg-card border-border">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Plus className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-card-foreground">{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {language === "ar" ? "أضف وظيفة جديدة للمضيفين" : "Add a new gig for ushers"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle className="text-card-foreground">{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title" className="text-card-foreground">{language === "ar" ? "عنوان الوظيفة" : "Gig Title"}</Label>
+                    <Input
+                      id="title"
+                      value={newGig.title}
+                      onChange={(e) => setNewGig({ ...newGig, title: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                      placeholder={language === "ar" ? "مثال: مضيف لحدث تجاري" : "e.g., Usher for Business Event"}
+                    />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</h3>
-                    <p className="text-sm text-gray-600">
-                      {language === "ar" ? "أضف وظيفة جديدة للمضيفين" : "Add a new gig for ushers"}
-                    </p>
+                    <Label htmlFor="description" className="text-card-foreground">{language === "ar" ? "وصف الوظيفة" : "Description"}</Label>
+                    <Textarea
+                      id="description"
+                      value={newGig.description}
+                      onChange={(e) => setNewGig({ ...newGig, description: e.target.value })}
+                      className="bg-background border-border text-foreground"
+                      placeholder={language === "ar" ? "وصف تفصيلي للوظيفة والمتطلبات" : "Detailed description of the gig and requirements"}
+                    />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Gigs Management */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">{language === "ar" ? "إدارة الوظائف" : "Manage Gigs"}</h2>
-              <Dialog open={showCreateGig} onOpenChange={setShowCreateGig}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateGig} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">{language === "ar" ? "عنوان الوظيفة" : "Gig Title"}</Label>
-                        <Input
-                          id="title"
-                          value={newGig.title}
-                          onChange={(e) => setNewGig({ ...newGig, title: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="location">{language === "ar" ? "الموقع" : "Location"}</Label>
-                        <Input
-                          id="location"
-                          value={newGig.location}
-                          onChange={(e) => setNewGig({ ...newGig, location: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description">{language === "ar" ? "الوصف" : "Description"}</Label>
-                      <Textarea
-                        id="description"
-                        value={newGig.description}
-                        onChange={(e) => setNewGig({ ...newGig, description: e.target.value })}
-                        rows={3}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="location" className="text-card-foreground">{language === "ar" ? "الموقع" : "Location"}</Label>
+                      <Input
+                        id="location"
+                        value={newGig.location}
+                        onChange={(e) => setNewGig({ ...newGig, location: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                        placeholder={language === "ar" ? "الموقع" : "Location"}
                       />
                     </div>
-
-                    {/* Date Range Section */}
-                    <div className="space-y-4 border-t pt-4">
-                      <h4 className="font-medium">{language === "ar" ? "فترة العمل" : "Work Period"}</h4>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="start_date">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
-                          <Input
-                            id="start_date"
-                            type="date"
-                            value={newGig.start_date}
-                            onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="end_date">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
-                          <Input
-                            id="end_date"
-                            type="date"
-                            value={newGig.end_date}
-                            onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })}
-                            min={newGig.start_date}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="start_datetime">
-                          {language === "ar" ? "وقت البداية اليومي" : "Daily Start Time"}
-                        </Label>
-                        <Input
-                          id="start_datetime"
-                          type="time"
-                          value={newGig.start_datetime}
-                          onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })}
-                          required
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="pay_rate" className="text-card-foreground">{language === "ar" ? "معدل الأجر" : "Pay Rate"}</Label>
+                      <Input
+                        id="pay_rate"
+                        type="number"
+                        value={newGig.pay_rate}
+                        onChange={(e) => setNewGig({ ...newGig, pay_rate: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                        placeholder="EGP/h"
+                      />
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="duration">{language === "ar" ? "ساعات العمل اليومية" : "Daily Hours"}</Label>
-                        <Input
-                          id="duration"
-                          type="number"
-                          min="1"
-                          max="24"
-                          value={newGig.duration_hours}
-                          onChange={(e) => setNewGig({ ...newGig, duration_hours: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="pay_rate">{language === "ar" ? "الأجر/ساعة (ج.م)" : "Pay Rate/hour (EGP)"}</Label>
-                        <Input
-                          id="pay_rate"
-                          type="number"
-                          min="50"
-                          step="0.01"
-                          value={newGig.pay_rate}
-                          onChange={(e) => setNewGig({ ...newGig, pay_rate: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="ushers_needed">
-                          {language === "ar" ? "عدد المضيفين المطلوب" : "Number of Ushers Needed"}
-                        </Label>
-                        <Input
-                          id="ushers_needed"
-                          type="number"
-                          min="1"
-                          value={newGig.total_ushers_needed}
-                          onChange={(e) => setNewGig({ ...newGig, total_ushers_needed: e.target.value })}
-                          required
-                        />
-                      </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start_date" className="text-card-foreground">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={newGig.start_date}
+                        onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
                     </div>
-
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setShowCreateGig(false)}>
-                        {language === "ar" ? "إلغاء" : "Cancel"}
-                      </Button>
-                      <Button type="submit">{language === "ar" ? "إنشاء الوظيفة" : "Create Gig"}</Button>
+                    <div>
+                      <Label htmlFor="end_date" className="text-card-foreground">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        value={newGig.end_date}
+                        onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
                     </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="duration_hours" className="text-card-foreground">{language === "ar" ? "ساعات يومية" : "Daily Hours"}</Label>
+                      <Input
+                        id="duration_hours"
+                        type="number"
+                        value={newGig.duration_hours}
+                        onChange={(e) => setNewGig({ ...newGig, duration_hours: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                        placeholder="8"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="total_ushers_needed" className="text-card-foreground">{language === "ar" ? "عدد المضيفين المطلوب" : "Ushers Needed"}</Label>
+                      <Input
+                        id="total_ushers_needed"
+                        type="number"
+                        value={newGig.total_ushers_needed}
+                        onChange={(e) => setNewGig({ ...newGig, total_ushers_needed: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                        placeholder="5"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button onClick={handleCreateGig} className="flex-1">
+                      {language === "ar" ? "إنشاء الوظيفة" : "Create Gig"}
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowCreateGig(false)} className="flex-1">
+                      {language === "ar" ? "إلغاء" : "Cancel"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Gigs Section */}
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-card-foreground">
+                {language === "ar" ? "الوظائف الحالية" : "Current Gigs"}
+              </h2>
             </div>
 
             {loading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p>{language === "ar" ? "جاري التحميل..." : "Loading..."}</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               </div>
             ) : gigs.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <p className="text-gray-500 mb-4">
-                    {language === "ar" ? "لم تقم بإنشاء أي وظائف بعد" : "You haven't created any gigs yet"}
+              <Card className="bg-card border-border">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Briefcase className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-card-foreground mb-2">
+                    {language === "ar" ? "لا توجد وظائف بعد" : "No gigs yet"}
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    {language === "ar" 
+                      ? "ابدأ بإنشاء وظيفة جديدة لجذب المضيفين الموهوبين"
+                      : "Start by creating a new gig to attract talented ushers"
+                    }
                   </p>
                   <Button onClick={() => setShowCreateGig(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    {language === "ar" ? "إنشاء أول وظيفة" : "Create Your First Gig"}
+                    {language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-6">
                 {gigs.map((gig: any) => (
-                  <Card key={gig.id}>
+                  <Card key={gig.id} className="bg-card border-border">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-lg">{gig.title}</CardTitle>
+                          <CardTitle className="text-lg text-card-foreground">{gig.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">{gig.location}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium">
+                          <p className="text-sm font-medium text-card-foreground">
                             {gig.approved_ushers || 0}/{gig.total_ushers_needed} {language === "ar" ? "مضيف" : "ushers"}
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -442,7 +421,7 @@ export default function BrandDashboard() {
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="font-medium">{language === "ar" ? "التاريخ" : "Date"}</p>
+                          <p className="font-medium text-card-foreground">{language === "ar" ? "التاريخ" : "Date"}</p>
                           <p className="text-muted-foreground">
                             {gig.start_date && gig.end_date
                               ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
@@ -450,15 +429,15 @@ export default function BrandDashboard() {
                           </p>
                         </div>
                         <div>
-                          <p className="font-medium">{language === "ar" ? "ساعات يومية" : "Daily Hours"}</p>
+                          <p className="font-medium text-card-foreground">{language === "ar" ? "ساعات يومية" : "Daily Hours"}</p>
                           <p className="text-muted-foreground">{gig.duration_hours}h</p>
                         </div>
                         <div>
-                          <p className="font-medium">{language === "ar" ? "الأجر" : "Pay Rate"}</p>
+                          <p className="font-medium text-card-foreground">{language === "ar" ? "الأجر" : "Pay Rate"}</p>
                           <p className="text-muted-foreground">{gig.pay_rate} EGP/h</p>
                         </div>
                         <div>
-                          <p className="font-medium">{language === "ar" ? "الحالة" : "Status"}</p>
+                          <p className="font-medium text-card-foreground">{language === "ar" ? "الحالة" : "Status"}</p>
                           <p className="text-muted-foreground capitalize">{gig.status}</p>
                         </div>
                       </div>

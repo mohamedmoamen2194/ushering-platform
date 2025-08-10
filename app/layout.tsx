@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Noto_Sans_Arabic } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
+import { ThemeProvider } from "@/lib/theme-context"
 import "./globals.css"
 
 const inter = Inter({ 
@@ -19,7 +20,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 })
 
 export const metadata: Metadata = {
-  title: "Aura - منصة الأحداث الصيفية",
+  title: "Aura",
   description: "Connect brands with professional ushers for North Coast summer events",
     generator: 'v0.dev'
 }
@@ -32,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="ar" suppressHydrationWarning>
       <body className={`${inter.variable} ${notoSansArabic.variable} font-sans antialiased`}>
-        <LanguageProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
