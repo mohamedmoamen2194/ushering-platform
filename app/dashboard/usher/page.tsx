@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { GigCard } from "@/components/gig-card"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { QRScanner } from "@/components/qr-scanner"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
-import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock } from 'lucide-react'
+import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock, QrCode, RefreshCw } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { ProtectedRoute } from "@/components/protected-route"
 
@@ -25,33 +26,28 @@ export default function UsherDashboard() {
     completedGigs: 0,
     rating: 0,
   })
+  const [statsLoading, setStatsLoading] = useState(false)
   const { t } = useTranslation(language)
   const [appliedGigs, setAppliedGigs] = useState([])
 
-  const fetchUserStats = async () => {
-    try {
-      const response = await fetch(`/api/users/${user?.id}/stats`)
-      const data = await response.json()
-
-      if (data.success) {
-        setStats({
-          totalEarnings: data.stats.total_earnings || 0,
-          completedGigs: data.stats.completed_gigs || 0,
-          rating: data.stats.rating || 0,
-        })
-      }
-    } catch (error) {
-      console.error("Failed to fetch user stats:", error)
-    }
-  }
-
   const fetchGigs = async () => {
     try {
-      const response = await fetch(`/api/gigs?userId=${user?.id}`)
+      setLoading(true)
+      console.log("🔄 Fetching fresh available gigs from database...")
+      
+      const response = await fetch(`/api/gigs?t=${Date.now()}`)
       const data = await response.json()
-      setGigs(data.gigs || [])
+      
+      if (data.success !== false) {
+        console.log("✅ Fresh available gigs fetched:", data.gigs?.length || 0, "gigs")
+        setGigs(data.gigs || [])
+      } else {
+        console.error("❌ Failed to fetch available gigs:", data.error)
+        setGigs([])
+      }
     } catch (error) {
-      console.error("Failed to fetch gigs:", error)
+      console.error("❌ Error fetching available gigs:", error)
+      setGigs([])
     } finally {
       setLoading(false)
     }
@@ -59,22 +55,73 @@ export default function UsherDashboard() {
 
   const fetchAppliedGigs = async () => {
     try {
-      const response = await fetch(`/api/applications/usher/${user?.id}`)
+      console.log("🔄 Fetching fresh applied gigs from database...")
+      
+      const response = await fetch(`/api/applications/usher/${user?.id}?t=${Date.now()}`)
       const data = await response.json()
-      setAppliedGigs(data.applications || [])
+      
+      if (data.success) {
+        console.log("✅ Fresh applied gigs fetched:", data.applications?.length || 0, "applications")
+        setAppliedGigs(data.applications || [])
+      } else {
+        console.error("❌ Failed to fetch applied gigs:", data.error)
+        setAppliedGigs([])
+      }
     } catch (error) {
-      console.error("Failed to fetch applied gigs:", error)
+      console.error("❌ Error fetching applied gigs:", error)
+      setAppliedGigs([])
+    }
+  }
+
+  const fetchUserStats = async () => {
+    try {
+      setStatsLoading(true)
+      console.log("🔄 Fetching fresh usher stats from database...")
+      
+      const response = await fetch(`/api/users/${user?.id}/stats?t=${Date.now()}`)
+      const data = await response.json()
+      
+      if (data.success !== false) {
+        console.log("✅ Fresh usher stats fetched:", data)
+        setStats({
+          totalEarnings: data.totalEarnings || 0,
+          completedGigs: data.completedGigs || 0,
+          rating: data.rating || 0,
+        })
+      } else {
+        console.error("❌ Failed to fetch usher stats:", data.error)
+      }
+    } catch (error) {
+      console.error("❌ Error fetching usher stats:", error)
+    } finally {
+      setStatsLoading(false)
+    }
+  }
+
+  const ensureProfile = async () => {
+    try {
+      if (user?.id) {
+        const response = await fetch(`/api/users/${user.id}/ensure-profile`, {
+          method: "POST"
+        })
+        const data = await response.json()
+        if (data.success && data.profileCreated) {
+          console.log("Profile ensured for user:", user.id)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to ensure profile:", error)
     }
   }
 
   useEffect(() => {
-    // Only fetch data when user is available
-    if (user) {
-      fetchGigs()
+    if (user?.id) {
+      ensureProfile()
       fetchUserStats()
+      fetchGigs()
       fetchAppliedGigs()
     }
-  }, [user])
+  }, [user?.id])
 
   const handleApply = async (gigId: number) => {
     try {
@@ -166,9 +213,13 @@ export default function UsherDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.totalEarnings} {language === "ar" ? "ج.م" : "EGP"}
-              </div>
+              {statsLoading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              ) : (
+                <div className="text-2xl font-bold">
+                  {stats.totalEarnings} {language === "ar" ? "ج.م" : "EGP"}
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">{language === "ar" ? "إجمالي الأرباح" : "Total earnings"}</p>
             </CardContent>
           </Card>
@@ -181,7 +232,11 @@ export default function UsherDashboard() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.completedGigs}</div>
+              {statsLoading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              ) : (
+                <div className="text-2xl font-bold">{stats.completedGigs}</div>
+              )}
               <p className="text-xs text-muted-foreground">{language === "ar" ? "وظائف مكتملة" : "Completed gigs"}</p>
             </CardContent>
           </Card>
@@ -192,10 +247,41 @@ export default function UsherDashboard() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.rating > 0 ? stats.rating.toFixed(1) : "0.0"}</div>
+              {statsLoading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              ) : (
+                <div className="text-2xl font-bold">{stats.rating > 0 ? stats.rating.toFixed(1) : "0.0"}</div>
+              )}
               <p className="text-xs text-muted-foreground">{language === "ar" ? "متوسط التقييم" : "Average rating"}</p>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="flex justify-end mb-4">
+          <Button 
+            onClick={() => {
+              console.log("🔄 Manual refresh requested for usher dashboard...")
+              fetchUserStats()
+              fetchGigs()
+              fetchAppliedGigs()
+            }}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {language === "ar" ? "تحديث البيانات" : "Refresh Data"}
+          </Button>
+        </div>
+
+        {/* QR Scanner Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <QrCode className="h-5 w-5" />
+            {language === "ar" ? "ماسح رمز QR" : "QR Code Scanner"}
+          </h2>
+          <div className="max-w-md">
+            <QRScanner />
+          </div>
         </div>
 
         {appliedGigs.length > 0 && (
@@ -219,6 +305,16 @@ export default function UsherDashboard() {
                             <DollarSign className="h-3 w-3" />
                             {application.pay_rate} {language === "ar" ? "ج.م/ساعة" : "EGP/hr"}
                           </span>
+                          {application.start_datetime && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })}
+                            </span>
+                          )}
                         </div>
 
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
@@ -226,6 +322,21 @@ export default function UsherDashboard() {
                             ? `${new Date(application.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(application.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
                             : formatDate(application.gig_datetime)}
                         </p>
+                        
+                        {application.start_datetime && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                              🕐 {new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })} (24h)
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(application.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                            </span>
+                          </div>
+                        )}
 
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {language === "ar" ? "تقدمت في:" : "Applied on:"}{" "}

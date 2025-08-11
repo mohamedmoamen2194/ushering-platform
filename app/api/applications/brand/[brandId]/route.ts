@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
         a.reviewed_at,
         g.title as gig_title,
         g.location as gig_location,
-        g.datetime as gig_datetime,
+        g.start_datetime as gig_datetime,
         u.name as usher_name,
         u.phone as usher_phone,
         u.email as usher_email,

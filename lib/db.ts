@@ -91,9 +91,9 @@ export async function getActiveGigs(location?: string, userId?: number) {
       JOIN users u ON g.brand_id = u.id
       JOIN brands b ON u.id = b.user_id
       WHERE g.status = 'active' 
-      AND g.datetime > NOW()
+      AND g.start_datetime > NOW()
       ${location ? sql`AND g.location ILIKE ${"%" + location + "%"}` : sql``}
-      ORDER BY g.datetime ASC
+      ORDER BY g.start_datetime ASC
     `
     return result
   } catch (error) {

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Get the gig details to check dates
     const gigResult = await sql`
-      SELECT g.id, g.brand_id, g.title, g.total_ushers_needed, g.datetime,
+      SELECT g.id, g.brand_id, g.title, g.total_ushers_needed, g.start_datetime,
              (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'approved') as approved_count
       FROM gigs g
       WHERE g.id = ${gigId} AND g.status = 'active'

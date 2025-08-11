@@ -21,29 +21,38 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const user = userResult[0]
 
     if (user.role === "usher") {
-      // Get usher stats
+      // Get usher stats with better handling of missing data
       const statsResult = await sql`
         SELECT 
-          u.rating,
-          u.total_gigs_completed,
-          COALESCE(SUM(s.payout_amount), 0) as total_earnings
-        FROM ushers u
-        LEFT JOIN shifts s ON u.user_id = s.usher_id AND s.payout_status = 'completed'
-        WHERE u.user_id = ${userId}
-        GROUP BY u.rating, u.total_gigs_completed
+          COALESCE(u.rating, 0) as rating,
+          COALESCE(u.total_gigs_completed, 0) as total_gigs_completed,
+          COALESCE(SUM(CASE WHEN s.payout_status = 'completed' THEN s.payout_amount ELSE 0 END), 0) as total_earnings,
+          COUNT(CASE WHEN s.payout_status = 'completed' THEN 1 END) as actual_completed_gigs
+        FROM users usr
+        LEFT JOIN ushers u ON usr.id = u.user_id
+        LEFT JOIN shifts s ON usr.id = s.usher_id AND s.payout_status = 'completed'
+        WHERE usr.id = ${userId}
+        GROUP BY usr.id, u.rating, u.total_gigs_completed
       `
 
       const stats = statsResult[0] || {
         rating: 0,
         total_gigs_completed: 0,
         total_earnings: 0,
+        actual_completed_gigs: 0,
       }
+
+      // Use actual completed gigs from shifts if available, otherwise fall back to profile data
+      const completedGigs = Math.max(
+        Number.parseInt(stats.actual_completed_gigs) || 0,
+        Number.parseInt(stats.total_gigs_completed) || 0
+      )
 
       return NextResponse.json({
         success: true,
         stats: {
           rating: Number.parseFloat(stats.rating) || 0,
-          completed_gigs: Number.parseInt(stats.total_gigs_completed) || 0,
+          completed_gigs: completedGigs,
           total_earnings: Number.parseFloat(stats.total_earnings) || 0,
         },
       })
@@ -51,15 +60,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       // Get brand stats
       const statsResult = await sql`
         SELECT 
-          b.wallet_balance,
+          COALESCE(b.wallet_balance, 0) as wallet_balance,
           COUNT(DISTINCT g.id) as total_gigs_created,
           COUNT(DISTINCT CASE WHEN g.status = 'active' THEN g.id END) as active_gigs,
           COUNT(DISTINCT a.usher_id) as total_ushers_hired
-        FROM brands b
-        LEFT JOIN gigs g ON b.user_id = g.brand_id
+        FROM users usr
+        LEFT JOIN brands b ON usr.id = b.user_id
+        LEFT JOIN gigs g ON usr.id = g.brand_id
         LEFT JOIN applications a ON g.id = a.gig_id AND a.status = 'approved'
-        WHERE b.user_id = ${userId}
-        GROUP BY b.wallet_balance
+        WHERE usr.id = ${userId}
+        GROUP BY usr.id, b.wallet_balance
       `
 
       const stats = statsResult[0] || {

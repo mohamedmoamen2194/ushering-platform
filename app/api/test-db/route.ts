@@ -3,45 +3,36 @@ import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("🧪 Testing database connection...")
+    console.log("🔍 Testing database connection...")
+    console.log("📝 DATABASE_URL exists:", !!process.env.DATABASE_URL)
     
     // Test basic connection
-    const testResult = await sql`SELECT NOW() as current_time, 'Database connected!' as message`
-    console.log("✅ Database connection successful:", testResult[0])
+    const result = await sql`SELECT NOW() as current_time, COUNT(*) as gig_count FROM gigs`
     
-    // Check if verification_codes table exists
-    const tableCheck = await sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'verification_codes'
-      ) as table_exists
-    `
-    
-    // List all tables
-    const allTables = await sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      ORDER BY table_name
-    `
+    console.log("✅ Database connection successful!")
+    console.log("🕐 Current time:", result[0].current_time)
+    console.log("📊 Total gigs:", result[0].gig_count)
     
     return NextResponse.json({
       success: true,
-      message: "Database connection successful",
-      currentTime: testResult[0].current_time,
-      verificationTableExists: tableCheck[0].table_exists,
-      allTables: allTables.map(t => t.table_name),
-      environment: process.env.NODE_ENV
+      message: "Database connected successfully",
+      data: {
+        currentTime: result[0].current_time,
+        totalGigs: result[0].gig_count
+      }
     })
     
   } catch (error) {
-    console.error("❌ Database test failed:", error)
-    return NextResponse.json({
-      success: false,
+    console.error("❌ Database connection failed:", error)
+    
+    return NextResponse.json({ 
+      success: false, 
       error: "Database connection failed",
       details: error instanceof Error ? error.message : "Unknown error",
-      environment: process.env.NODE_ENV
+      envCheck: {
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
+      }
     }, { status: 500 })
   }
 }

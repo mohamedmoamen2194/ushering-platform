@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { QRCodeDisplay } from "@/components/qr-code-display"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
-import { Plus, DollarSign, Users, Calendar, LogOut, Bell, FileText, MapPin, Clock, Wallet, Briefcase, UserCheck } from "lucide-react"
+import { Plus, DollarSign, Users, Calendar, LogOut, Bell, FileText, MapPin, Clock, Wallet, Briefcase, UserCheck, QrCode, Star, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import Link from "next/link"
 import { ProtectedRoute } from "@/components/protected-route"
@@ -48,39 +49,84 @@ export default function BrandDashboard() {
     is_recurring: false,
   })
 
-  useEffect(() => {
-    // Only fetch data when user is available
-    if (user) {
-      fetchGigs()
-      fetchBrandStats()
+  // Helper function to format time consistently
+  const formatStartTime = (startDatetime: string) => {
+    if (!startDatetime) return "N/A"
+    try {
+      const date = new Date(startDatetime)
+      if (isNaN(date.getTime())) return "Invalid Time"
+      return date.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    } catch (error) {
+      return "Invalid Time"
     }
-  }, [user])
+  }
+
+  // Helper function to format date and time together
+  const formatDateTime = (startDatetime: string) => {
+    if (!startDatetime) return "N/A"
+    try {
+      const date = new Date(startDatetime)
+      if (isNaN(date.getTime())) return "Invalid Date/Time"
+      return date.toLocaleString(language === "ar" ? "ar-EG" : "en-US", {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    } catch (error) {
+      return "Invalid Date/Time"
+    }
+  }
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchBrandStats()
+      fetchGigs()
+    }
+  }, [user?.id])
 
   const fetchBrandStats = async () => {
     try {
-      const response = await fetch(`/api/users/${user?.id}/stats`)
+      console.log("🔄 Fetching fresh brand stats from database...")
+      
+      const response = await fetch(`/api/users/${user?.id}/stats?t=${Date.now()}`)
       const data = await response.json()
-
-      if (data.success) {
-        setStats({
-          walletBalance: data.stats.wallet_balance || 0,
-          activeGigs: data.stats.active_gigs || 0,
-          totalUshersHired: data.stats.total_ushers_hired || 0,
-        })
+      
+      if (data.success !== false) {
+        console.log("✅ Fresh stats fetched:", data)
+        setStats(data)
+      } else {
+        console.error("❌ Failed to fetch stats:", data.error)
       }
     } catch (error) {
-      console.error("Failed to fetch brand stats:", error)
+      console.error("❌ Error fetching stats:", error)
     }
   }
 
   // Update the fetchGigs function to check for new columns
   const fetchGigs = async () => {
     try {
-      const response = await fetch(`/api/gigs?role=brand&userId=${user?.id}`)
+      setLoading(true)
+      console.log("🔄 Fetching fresh gigs from database...")
+      
+      const response = await fetch(`/api/gigs?role=brand&userId=${user?.id}&t=${Date.now()}`)
       const data = await response.json()
-      setGigs(data.gigs || [])
+      
+      if (data.success !== false) {
+        console.log("✅ Fresh gigs fetched:", data.gigs?.length || 0, "gigs")
+        setGigs(data.gigs || [])
+      } else {
+        console.error("❌ Failed to fetch gigs:", data.error)
+        setGigs([])
+      }
     } catch (error) {
-      console.error("Failed to fetch gigs:", error)
+      console.error("❌ Error fetching gigs:", error)
+      setGigs([])
     } finally {
       setLoading(false)
     }
@@ -93,6 +139,25 @@ export default function BrandDashboard() {
 
   const handleCreateGig = async () => {
     try {
+      // Validate required fields
+      if (!newGig.title || !newGig.location || !newGig.start_date || !newGig.start_datetime || 
+          !newGig.duration_hours || !newGig.pay_rate || !newGig.total_ushers_needed) {
+        alert(language === "ar" 
+          ? "يرجى ملء جميع الحقول المطلوبة" 
+          : "Please fill in all required fields")
+        return
+      }
+
+      // Validate that start date is not in the past
+      const startDate = new Date(`${newGig.start_date}T${newGig.start_datetime}`)
+      if (startDate < new Date()) {
+        alert(language === "ar" 
+          ? "تاريخ البداية لا يمكن أن يكون في الماضي" 
+          : "Start date cannot be in the past")
+        return
+      }
+
+      // Create gig with automatic brand ID from authenticated user
       const response = await fetch("/api/gigs", {
         method: "POST",
         headers: {
@@ -100,7 +165,7 @@ export default function BrandDashboard() {
         },
         body: JSON.stringify({
           ...newGig,
-          brand_id: user?.id,
+          brand_id: user?.id, // Automatically set from the authenticated user
         }),
       })
 
@@ -120,9 +185,20 @@ export default function BrandDashboard() {
           is_recurring: false,
         })
         fetchGigs()
+        alert(language === "ar" 
+          ? "تم إنشاء الوظيفة بنجاح!" 
+          : "Gig created successfully!")
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || (language === "ar" 
+          ? "فشل في إنشاء الوظيفة" 
+          : "Failed to create gig"))
       }
     } catch (error) {
       console.error("Failed to create gig:", error)
+      alert(language === "ar" 
+        ? "حدث خطأ في إنشاء الوظيفة" 
+        : "Error creating gig")
     }
   }
 
@@ -261,6 +337,11 @@ export default function BrandDashboard() {
               <DialogContent className="bg-card border-border">
                 <DialogHeader>
                   <DialogTitle className="text-card-foreground">{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {language === "ar" 
+                      ? "سيتم ربط الوظيفة تلقائياً بحسابك كعلامة تجارية" 
+                      : "The gig will be automatically linked to your brand account"}
+                  </p>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -306,7 +387,7 @@ export default function BrandDashboard() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="start_date" className="text-card-foreground">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
                       <Input
@@ -318,6 +399,19 @@ export default function BrandDashboard() {
                       />
                     </div>
                     <div>
+                      <Label htmlFor="start_datetime" className="text-card-foreground">{language === "ar" ? "وقت البداية" : "Start Time"}</Label>
+                      <Input
+                        id="start_datetime"
+                        type="time"
+                        value={newGig.start_datetime}
+                        onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === "ar" ? "مطلوب لإنشاء رمز QR" : "Required for QR code generation"}
+                      </p>
+                    </div>
+                    <div>
                       <Label htmlFor="end_date" className="text-card-foreground">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
                       <Input
                         id="end_date"
@@ -326,6 +420,9 @@ export default function BrandDashboard() {
                         onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })}
                         className="bg-background border-border text-foreground"
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === "ar" ? "اختياري - إذا لم يتم تحديده، سيتم استخدام تاريخ البداية" : "Optional - if not set, start date will be used"}
+                      </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -352,6 +449,34 @@ export default function BrandDashboard() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Live Preview */}
+                  {(newGig.start_date || newGig.start_datetime) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-medium text-card-foreground mb-3">
+                        {language === "ar" ? "معاينة الجدول الزمني" : "Schedule Preview"}
+                      </h4>
+                      <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                        {newGig.start_datetime && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                              🕐 {formatStartTime(newGig.start_datetime)}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {newGig.start_date ? new Date(newGig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US") : "No date set"}
+                            </span>
+                          </div>
+                        )}
+                        {newGig.start_date && newGig.end_date && newGig.start_date !== newGig.end_date && (
+                          <p className="text-muted-foreground">
+                            <span className="font-medium">{language === "ar" ? "المدة:" : "Duration:"}</span>{" "}
+                            {new Date(newGig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - {new Date(newGig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex gap-2 pt-4">
                     <Button onClick={handleCreateGig} className="flex-1">
                       {language === "ar" ? "إنشاء الوظيفة" : "Create Gig"}
@@ -371,6 +496,43 @@ export default function BrandDashboard() {
               <h2 className="text-2xl font-bold text-card-foreground">
                 {language === "ar" ? "الوظائف الحالية" : "Current Gigs"}
               </h2>
+              <div className="flex justify-end mb-4">
+                <Button 
+                  variant="outline" 
+                  className="mr-2"
+                  onClick={() => {
+                    console.log("🔄 Manual refresh requested...")
+                    fetchBrandStats()
+                    fetchGigs()
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {language === "ar" ? "تحديث" : "Refresh"}
+                </Button>
+                <Button onClick={() => setShowCreateGig(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="ml-2"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/test-db')
+                      const data = await response.json()
+                      if (data.success) {
+                        alert(`✅ Database connected! Total gigs: ${data.data.totalGigs}`)
+                      } else {
+                        alert(`❌ Database failed: ${data.error}`)
+                      }
+                    } catch (error) {
+                      alert('❌ Failed to test database connection')
+                    }
+                  }}
+                >
+                  🔍 Test DB
+                </Button>
+              </div>
             </div>
 
             {loading ? (
@@ -407,6 +569,16 @@ export default function BrandDashboard() {
                         <div>
                           <CardTitle className="text-lg text-card-foreground">{gig.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">{gig.location}</p>
+                          {gig.start_datetime && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                🕐 {formatStartTime(gig.start_datetime)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-card-foreground">
@@ -419,13 +591,25 @@ export default function BrandDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mb-4">
                         <div>
                           <p className="font-medium text-card-foreground">{language === "ar" ? "التاريخ" : "Date"}</p>
                           <p className="text-muted-foreground">
                             {gig.start_date && gig.end_date
                               ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
-                              : new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                              : gig.start_datetime 
+                                ? new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")
+                                : "N/A"
+                            }
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-card-foreground">{language === "ar" ? "وقت البداية" : "Start Time"}</p>
+                          <p className="text-muted-foreground">
+                            {gig.start_datetime && !isNaN(new Date(gig.start_datetime).getTime())
+                              ? formatStartTime(gig.start_datetime) + " (24h)"
+                              : "Not set"
+                            }
                           </p>
                         </div>
                         <div>
@@ -440,6 +624,62 @@ export default function BrandDashboard() {
                           <p className="font-medium text-card-foreground">{language === "ar" ? "الحالة" : "Status"}</p>
                           <p className="text-muted-foreground capitalize">{gig.status}</p>
                         </div>
+                      </div>
+                      
+                      {/* Schedule Details */}
+                      {gig.start_datetime && (
+                        <div className="border-t pt-4 mb-4">
+                          <h4 className="text-sm font-medium text-card-foreground mb-2">
+                            {language === "ar" ? "تفاصيل الجدول الزمني" : "Schedule Details"}
+                          </h4>
+                          <div className="text-sm text-muted-foreground">
+                            <p>
+                              <span className="font-medium">{language === "ar" ? "يبدأ في:" : "Starts at:"}</span>{" "}
+                              {formatDateTime(gig.start_datetime)}
+                            </p>
+                            {gig.start_date && gig.end_date && (
+                              <p className="mt-1">
+                                <span className="font-medium">{language === "ar" ? "المدة:" : "Duration:"}</span>{" "}
+                                {new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - {new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* QR Code Section */}
+                      {gig.status === 'active' && (
+                        <div className="border-t pt-4">
+                          <h4 className="text-sm font-medium text-card-foreground mb-3 flex items-center gap-2">
+                            <QrCode className="h-4 w-4" />
+                            {language === "ar" ? "رمز QR للحدث" : "Event QR Code"}
+                          </h4>
+                          <QRCodeDisplay
+                            gigId={gig.id}
+                            brandId={user?.id || 0}
+                            gigTitle={gig.title}
+                            startTime={formatDateTime(gig.start_datetime || gig.start_date)}
+                            durationHours={gig.duration_hours}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-4 pt-4 border-t">
+                        <Link href={`/dashboard/brand/applications?gigId=${gig.id}`}>
+                          <Button variant="outline" size="sm">
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            {language === "ar" ? "عرض الطلبات" : "View Applications"}
+                          </Button>
+                        </Link>
+                        {gig.status === 'active' && (
+                          <Link href={`/dashboard/brand/rate-ushers?gigId=${gig.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Star className="h-4 w-4 mr-2" />
+                              {language === "ar" ? "تقييم المضيفين" : "Rate Ushers"}
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

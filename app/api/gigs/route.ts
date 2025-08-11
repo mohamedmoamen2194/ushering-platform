@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role")
     const userId = searchParams.get("userId")
 
-    console.log("Fetching gigs for userId:", userId, "role:", role)
+    console.log("🔄 Fetching fresh gigs from database for userId:", userId, "role:", role)
 
     // Check if the new columns exist
     const columnsCheck = await sql`
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     `
 
     const hasNewColumns = columnsCheck.length > 0
-    console.log("Has new columns:", hasNewColumns)
+    console.log("📋 Has new columns:", hasNewColumns)
 
     if (role === "brand" && userId) {
       // Get gigs created by this brand
@@ -28,9 +28,16 @@ export async function GET(request: NextRequest) {
                (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'pending') as pending_applications
         FROM gigs g
         WHERE g.brand_id = ${userId}
-        ORDER BY g.datetime DESC
+        ORDER BY g.start_datetime DESC
       `
-      return NextResponse.json({ gigs: result })
+      
+      console.log("✅ Brand gigs fetched:", result.length, "gigs")
+      
+      const response = NextResponse.json({ gigs: result })
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+      return response
     } else {
       // Get available gigs for ushers - SIMPLIFIED LOGIC
       let gigQuery
@@ -45,7 +52,7 @@ export async function GET(request: NextRequest) {
           JOIN users u ON g.brand_id = u.id
           JOIN brands b ON u.id = b.user_id
           WHERE g.status = 'active' 
-          AND g.datetime > NOW()
+          AND g.start_datetime > NOW()
           ${location ? sql`AND g.location ILIKE ${`%${location}%`}` : sql``}
           AND NOT EXISTS (
             SELECT 1 FROM applications a 
@@ -53,7 +60,7 @@ export async function GET(request: NextRequest) {
             AND a.usher_id = ${userId} 
             AND a.status = 'approved'
           )
-          ORDER BY g.datetime ASC
+          ORDER BY g.start_datetime ASC
         `
       } else {
         // No user ID provided
@@ -65,14 +72,14 @@ export async function GET(request: NextRequest) {
           JOIN users u ON g.brand_id = u.id
           JOIN brands b ON u.id = b.user_id
           WHERE g.status = 'active' 
-          AND g.datetime > NOW()
+          AND g.start_datetime > NOW()
           ${location ? sql`AND g.location ILIKE ${`%${location}%`}` : sql``}
-          ORDER BY g.datetime ASC
+          ORDER BY g.start_datetime ASC
         `
       }
 
       let result = await gigQuery
-      console.log("Initial gigs found:", result.length)
+      console.log("✅ Available gigs fetched:", result.length, "gigs")
 
       // ONLY filter for date conflicts if user has PENDING applications
       if (userId && hasNewColumns && result.length > 0) {
@@ -87,7 +94,7 @@ export async function GET(request: NextRequest) {
           AND g.end_date IS NOT NULL
         `
 
-        console.log("User pending applications:", pendingApps.length)
+        console.log("📝 User pending applications:", pendingApps.length)
 
         if (pendingApps.length > 0) {
           const beforeFilter = result.length
@@ -105,20 +112,24 @@ export async function GET(request: NextRequest) {
             })
 
             if (hasConflict) {
-              console.log(`Filtering out gig ${gig.id} (${gig.title}) due to pending conflict`)
+              console.log(`🚫 Filtering out gig ${gig.id} (${gig.title}) due to pending conflict`)
             }
 
             return !hasConflict
           })
 
-          console.log(`Filtered gigs: ${beforeFilter} -> ${result.length}`)
+          console.log(`🔍 Filtered gigs: ${beforeFilter} -> ${result.length}`)
         }
       }
 
-      return NextResponse.json({ gigs: result, hasNewColumns })
+      const response = NextResponse.json({ gigs: result, hasNewColumns })
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+      return response
     }
   } catch (error) {
-    console.error("Gigs fetch error:", error)
+    console.error("❌ Gigs fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch gigs" }, { status: 500 })
   }
 }
@@ -127,7 +138,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
-      brandId,
       title,
       description,
       location,
@@ -140,6 +150,39 @@ export async function POST(request: NextRequest) {
       skills_required,
       is_recurring,
     } = body
+
+    // Get brand ID from the request body (this should be automatically set by the frontend)
+    const brandId = body.brand_id
+
+    if (!brandId) {
+      return NextResponse.json({ 
+        error: "Brand ID is required. Please ensure you are logged in as a brand." 
+      }, { status: 400 })
+    }
+
+    // Verify the user is actually a brand
+    const userCheck = await sql`
+      SELECT id, role FROM users WHERE id = ${brandId}
+    `
+
+    if (userCheck.length === 0) {
+      return NextResponse.json({ 
+        error: "User not found" 
+      }, { status: 404 })
+    }
+
+    if (userCheck[0].role !== 'brand') {
+      return NextResponse.json({ 
+        error: "Only brands can create gigs" 
+      }, { status: 403 })
+    }
+
+    // Validate required fields
+    if (!title || !location || !duration_hours || !pay_rate || !total_ushers_needed) {
+      return NextResponse.json({ 
+        error: "Missing required fields: title, location, duration_hours, pay_rate, total_ushers_needed" 
+      }, { status: 400 })
+    }
 
     // Check if the new columns exist
     const columnsCheck = await sql`
@@ -154,12 +197,34 @@ export async function POST(request: NextRequest) {
 
     if (hasNewColumns) {
       // Create the full datetime by combining date and time if both are provided
-      const fullDateTime = start_date && start_datetime ? `${start_date} ${start_datetime}:00` : start_datetime
+      let fullDateTime = null
+      
+      if (start_date && start_datetime) {
+        // Combine date and time
+        fullDateTime = `${start_date}T${start_datetime}:00`
+      } else if (start_datetime) {
+        // Use datetime as is
+        fullDateTime = start_datetime
+      } else if (start_date) {
+        // Use date with default time (9 AM)
+        fullDateTime = `${start_date}T09:00:00`
+      } else {
+        return NextResponse.json({ 
+          error: "Either start_date or start_datetime must be provided" 
+        }, { status: 400 })
+      }
+
+      // Validate datetime format
+      if (isNaN(Date.parse(fullDateTime))) {
+        return NextResponse.json({ 
+          error: "Invalid datetime format" 
+        }, { status: 400 })
+      }
 
       result = await sql`
         INSERT INTO gigs (
           brand_id, title, description, location, 
-          datetime, start_date, end_date, 
+          start_datetime, start_date, end_date,
           duration_hours, pay_rate, total_ushers_needed, 
           skills_required, is_recurring
         )
@@ -173,13 +238,34 @@ export async function POST(request: NextRequest) {
       `
     } else {
       // Use old schema without the new columns
-      // For old schema, we need to create a proper datetime from the inputs
-      const fullDateTime = start_date && start_datetime ? `${start_date} ${start_datetime}:00` : start_datetime
+      let fullDateTime = null
+      
+      if (start_date && start_datetime) {
+        // Combine date and time
+        fullDateTime = `${start_date}T${start_datetime}:00`
+      } else if (start_datetime) {
+        // Use datetime as is
+        fullDateTime = start_datetime
+      } else if (start_date) {
+        // Use date with default time (9 AM)
+        fullDateTime = `${start_date}T09:00:00`
+      } else {
+        return NextResponse.json({ 
+          error: "Either start_date or start_datetime must be provided" 
+        }, { status: 400 })
+      }
+
+      // Validate datetime format
+      if (isNaN(Date.parse(fullDateTime))) {
+        return NextResponse.json({ 
+          error: "Invalid datetime format" 
+        }, { status: 400 })
+      }
 
       result = await sql`
         INSERT INTO gigs (
           brand_id, title, description, location, 
-          datetime, duration_hours, pay_rate, 
+          start_datetime, duration_hours, pay_rate, 
           total_ushers_needed, skills_required
         )
         VALUES (
@@ -191,12 +277,17 @@ export async function POST(request: NextRequest) {
       `
     }
 
+    console.log("✅ Gig created successfully for brand:", brandId, "Gig:", result[0])
+
     return NextResponse.json({
       success: true,
       gig: result[0],
     })
   } catch (error) {
     console.error("Gig creation error:", error)
-    return NextResponse.json({ error: "Failed to create gig" }, { status: 500 })
+    return NextResponse.json({ 
+      error: "Failed to create gig",
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 })
   }
 }

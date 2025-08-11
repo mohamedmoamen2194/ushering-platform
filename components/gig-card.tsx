@@ -11,7 +11,8 @@ interface GigCardProps {
     id: number
     title: string
     location: string
-    datetime: string
+    datetime?: string
+    start_datetime?: string
     duration_hours: number
     pay_rate: number
     total_ushers_needed: number
@@ -158,9 +159,13 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
         <div>
           <p className="text-sm font-medium mb-2">{t("date")}:</p>
           <p className="text-sm text-muted-foreground">
-            {gig.start_date && gig.end_date
-              ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
-              : formatDate(gig.datetime)}
+                          {gig.start_date && gig.end_date
+                ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
+                : gig.start_datetime 
+                  ? formatDate(gig.start_datetime)
+                  : gig.datetime 
+                    ? formatDate(gig.datetime)
+                    : "No date set"}
           </p>
         </div>
 
