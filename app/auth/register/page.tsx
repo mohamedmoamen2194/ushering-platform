@@ -224,10 +224,9 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="flex items-center justify-center gap-2 mb-4">
-                          <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Aura</h1>
+            <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            </div>
           </Link>
           <div className="flex justify-center items-center gap-4">
             <ThemeToggle />

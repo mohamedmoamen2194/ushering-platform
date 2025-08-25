@@ -198,13 +198,10 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">A</span>
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            {language === "ar" ? "مرحباً بك في منصة أورا" : "Welcome to Aura Platform"}
-          </h1>
         </div>
 
         {/* Language Switcher and Theme Toggle */}

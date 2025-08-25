@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useMemo } from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -49,36 +50,81 @@ export default function BrandDashboard() {
     is_recurring: false,
   })
 
-  // Helper function to format time consistently
+  const getPreviewStartISO = () => {
+    if (!newGig.start_date && !newGig.start_datetime) return ""
+    if (newGig.start_date && newGig.start_datetime) {
+      return `${newGig.start_date}T${newGig.start_datetime}:00`
+    }
+    return newGig.start_datetime || ""
+  }
+  
+  const previewStartISO = useMemo(() => getPreviewStartISO(), [newGig.start_date, newGig.start_datetime])
+  
+  // Helper: check if string looks like YYYY-MM-DD
+  const isDateOnly = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
+
+  // Helper: check if string looks like time-only HH:MM (24h)
+  const isTimeOnly = (s: string) => /^\d{2}:\d{2}$/.test(s)
+
+  // Format time (Cairo)
   const formatStartTime = (startDatetime: string) => {
     if (!startDatetime) return "N/A"
     try {
-      const date = new Date(startDatetime)
-      if (isNaN(date.getTime())) return "Invalid Time"
-      return date.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
+      // time-only => show as-is (safe)
+      if (isTimeOnly(startDatetime)) return startDatetime
+
+      // date-only => show midnight time as 00:00 (or return N/A for time)
+      if (isDateOnly(startDatetime)) {
+        const [y, m, d] = startDatetime.split("-").map(Number)
+        // construct a UTC midnight for that date (unambiguous)
+        const dateUtc = new Date(Date.UTC(y, m - 1, d))
+        return dateUtc.toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", {
+          month: "short",
+          day: "numeric",
+          timeZone: "Africa/Cairo",
+        })
+      }
+
+      // full datetime / ISO
+      const d = new Date(startDatetime)
+      if (isNaN(d.getTime())) return "Invalid Time"
+      return d.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Africa/Cairo",
       })
-    } catch (error) {
+    } catch {
       return "Invalid Time"
     }
   }
 
-  // Helper function to format date and time together
+  // Format date + time (Cairo). If input is date-only, show only date (no time).
   const formatDateTime = (startDatetime: string) => {
     if (!startDatetime) return "N/A"
     try {
-      const date = new Date(startDatetime)
-      if (isNaN(date.getTime())) return "Invalid Date/Time"
-      return date.toLocaleString(language === "ar" ? "ar-EG" : "en-US", {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
+      if (isDateOnly(startDatetime)) {
+        const [y, m, d] = startDatetime.split("-").map(Number)
+        const dateObj = new Date(y, m - 1, d) // local midnight
+        return dateObj.toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })
+      }
+
+      if (isTimeOnly(startDatetime)) {
+        // show time-only
+        return startDatetime
+      }
+
+      const d = new Date(startDatetime)
+      if (isNaN(d.getTime())) return "Invalid Date/Time"
+      return d.toLocaleString(language === "ar" ? "ar-EG" : "en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Africa/Cairo",
       })
-    } catch (error) {
+    } catch {
       return "Invalid Date/Time"
     }
   }
@@ -149,11 +195,14 @@ export default function BrandDashboard() {
       }
 
       // Validate that start date is not in the past
-      const startDate = new Date(`${newGig.start_date}T${newGig.start_datetime}`)
+      const startDateISO = previewStartISO || (newGig.start_date && newGig.start_datetime ? `${newGig.start_date}T${newGig.start_datetime}:00` : "")
+      const startDate = startDateISO ? new Date(startDateISO) : null
+      if (!startDate || isNaN(startDate.getTime())) {
+        alert(language === "ar" ? "تنسيق تاريخ/وقت غير صالح" : "Invalid start date/time")
+        return
+      }
       if (startDate < new Date()) {
-        alert(language === "ar" 
-          ? "تاريخ البداية لا يمكن أن يكون في الماضي" 
-          : "Start date cannot be in the past")
+        alert(language === "ar" ? "تاريخ البداية لا يمكن أن يكون في الماضي" : "Start date cannot be in the past")
         return
       }
 
@@ -215,36 +264,35 @@ export default function BrandDashboard() {
       <div className={`min-h-screen bg-background ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
         {/* Header */}
         <header className="bg-card shadow-sm border-b border-border">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-custom-gold dark:to-amber-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">A</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-card-foreground">{user.profile?.company_name || user.name}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {language === "ar" ? "لوحة تحكم العلامة التجارية" : "Brand Dashboard"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
-                <Link href="/dashboard/brand/applications">
-                  <Button variant="ghost" size="sm">
-                    <FileText className="h-4 w-4 mr-2" />
-                    {language === "ar" ? "الطلبات" : "Applications"}
-                  </Button>
-                </Link>
+          <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
+            {/* Logo */}
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            </div>
+            {/* Header Text */}
+            <div className="text-center mb-2">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{user.profile?.company_name || user.name}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {language === "ar" ? "لوحة تحكم العلامة التجارية" : "Brand Dashboard"}
+              </p>
+            </div>
+            {/* Header Actions */}
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-2 w-full">
+              <ThemeToggle />
+              <Link href="/dashboard/brand/applications">
                 <Button variant="ghost" size="sm">
-                  <Bell className="h-4 w-4" />
+                  <FileText className="h-4 w-4 mr-2" />
+                  {language === "ar" ? "الطلبات" : "Applications"}
                 </Button>
-                <LanguageSwitcher />
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4" />
-                  {language === "ar" ? "خروج" : "Logout"}
-                </Button>
-              </div>
+              </Link>
+              <Button variant="ghost" size="sm">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <LanguageSwitcher />
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                {language === "ar" ? "خروج" : "Logout"}
+              </Button>
             </div>
           </div>
         </header>
@@ -457,16 +505,18 @@ export default function BrandDashboard() {
                         {language === "ar" ? "معاينة الجدول الزمني" : "Schedule Preview"}
                       </h4>
                       <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                        {newGig.start_datetime && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                              🕐 {formatStartTime(newGig.start_datetime)}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {newGig.start_date ? new Date(newGig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US") : "No date set"}
-                            </span>
-                          </div>
-                        )}
+                      {newGig.start_datetime && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex ...">
+                            🕐 {formatStartTime(newGig.start_datetime)}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {newGig.start_date
+                              ? formatDateTime(newGig.start_date)
+                              : "No date set"}
+                          </span>
+                        </div>
+                      )}
                         {newGig.start_date && newGig.end_date && newGig.start_date !== newGig.end_date && (
                           <p className="text-muted-foreground">
                             <span className="font-medium">{language === "ar" ? "المدة:" : "Duration:"}</span>{" "}
@@ -575,7 +625,7 @@ export default function BrandDashboard() {
                                 🕐 {formatStartTime(gig.start_datetime)}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                                {new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US",{ timeZone: "Africa/Cairo" })}
                               </span>
                             </div>
                           )}
@@ -598,7 +648,7 @@ export default function BrandDashboard() {
                             {gig.start_date && gig.end_date
                               ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
                               : gig.start_datetime 
-                                ? new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")
+                                ? new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })
                                 : "N/A"
                             }
                           </p>

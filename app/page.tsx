@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useTranslation } from "@/lib/i18n"
+import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
 import { Users, Briefcase, FileText, TrendingUp, Star, MapPin, Clock, ArrowRight, CheckCircle } from 'lucide-react'
+import { LogOut } from "lucide-react"
 import Link from "next/link"
 
 interface PlatformStats {
@@ -21,6 +23,7 @@ interface PlatformStats {
 }
 
 export default function HomePage() {
+  const { user, logout } = useAuth()
   const { language, isRTL } = useLanguage()
   const { t } = useTranslation(language)
   const [stats, setStats] = useState<PlatformStats | null>(null)
@@ -68,37 +71,47 @@ export default function HomePage() {
     }
   }
 
+  const handleLogout = () => { logout(); }
+
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-custom-black dark:to-custom-navy ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <header className="bg-white dark:bg-custom-navy shadow-sm dark:shadow-custom-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-custom-gold dark:to-amber-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Aura</h1>
-              {stats?.isDemo && (
-                <Badge variant="secondary" className="ml-2">
-                  {language === "ar" ? "وضع التجربة" : "Demo Mode"}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <LanguageSwitcher />
-              <Link href="/auth/login">
-                <Button variant="outline">
-                  {language === "ar" ? "تسجيل الدخول" : "Login"}
-                </Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button>
-                  {language === "ar" ? "إنشاء حساب" : "Sign Up"}
-                </Button>
-              </Link>
-            </div>
+      <header className="bg-card shadow-sm border-b border-border">
+        <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
+          {/* Logo */}
+          <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
+            <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+          </div>
+          {/* Header Text */}
+          <div className="text-center mb-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{language === "ar" ? "مرحباً،" : "Welcome,"} {user ? user.name : ""}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {language === "ar" ? "الصفحة الرئيسية" : "Home"}
+            </p>
+          </div>
+          {/* Header Actions */}
+          <div className="flex flex-wrap justify-center items-center gap-2 mt-2 w-full">
+            <ThemeToggle />
+            <LanguageSwitcher />
+            {user ? (
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                {language === "ar" ? "خروج" : "Logout"}
+              </Button>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="ghost" size="sm">
+                    {language === "ar" ? "تسجيل الدخول" : "Login"}
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button variant="ghost" size="sm">
+                    {language === "ar" ? "تسجيل" : "Register"}
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

@@ -221,6 +221,9 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
+      const dateObj = new Date(fullDateTime);              
+      const utcISOString = dateObj.toISOString();         
+
       result = await sql`
         INSERT INTO gigs (
           brand_id, title, description, location, 
@@ -230,7 +233,7 @@ export async function POST(request: NextRequest) {
         )
         VALUES (
           ${brandId}, ${title}, ${description}, ${location}, 
-          ${fullDateTime}, ${start_date || null}, ${end_date || null}, 
+          ${utcISOString}, ${start_date || null}, ${end_date || null}, 
           ${duration_hours}, ${pay_rate}, ${total_ushers_needed}, 
           ${skills_required || []}, ${is_recurring || false}
         )

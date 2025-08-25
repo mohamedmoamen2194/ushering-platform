@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/auth-context"
 import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock, QrCode, RefreshCw } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { ProtectedRoute } from "@/components/protected-route"
+import Link from "next/link"
+import { FileText } from "lucide-react"
 
 export default function UsherDashboard() {
   const { user, logout } = useAuth()
@@ -176,37 +178,35 @@ export default function UsherDashboard() {
   return (
     <ProtectedRoute requiredRole="usher">
       <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
-      <header className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {language === "ar" ? `مرحباً، ${user.name}` : `Welcome, ${user.name}`}
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{language === "ar" ? "لوحة تحكم المضيف" : "Usher Dashboard"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="ghost" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <LanguageSwitcher />
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-                {language === "ar" ? "خروج" : "Logout"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <header className="bg-card shadow-sm border-b border-border">
+  <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
+    {/* Logo */}
+    <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
+      <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+    </div>
+    {/* Header Text */}
+    <div className="text-center mb-2">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{user.name}</h1>
+      <p className="text-sm sm:text-base text-muted-foreground">
+        {language === "ar" ? "لوحة تحكم المضيف" : "Usher Dashboard"}
+      </p>
+    </div>
+    {/* Header Actions */}
+    <div className="flex flex-wrap justify-center items-center gap-2 mt-2 w-full">
+      <ThemeToggle />
+      <Button variant="ghost" size="sm">
+        <Bell className="h-4 w-4" />
+      </Button>
+      <LanguageSwitcher />
+      <Button variant="ghost" size="sm" onClick={handleLogout}>
+        <LogOut className="h-4 w-4" />
+        {language === "ar" ? "خروج" : "Logout"}
+      </Button>
+    </div>
+  </div>
+</header>
+  <div className="container mx-auto px-4 py-8"> 
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t("totalEarnings")}</CardTitle>
@@ -275,7 +275,7 @@ export default function UsherDashboard() {
 
         {/* QR Scanner Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 text-center">
             <QrCode className="h-5 w-5" />
             {language === "ar" ? "ماسح رمز QR" : "QR Code Scanner"}
           </h2>
@@ -286,7 +286,7 @@ export default function UsherDashboard() {
 
         {appliedGigs.length > 0 && (
           <div className="space-y-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
             <div className="grid gap-4">
               {appliedGigs.map((application: any) => (
                 <Card key={application.id} className="border-l-4 border-l-blue-500">
@@ -406,7 +406,7 @@ export default function UsherDashboard() {
 
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{language === "ar" ? "الوظائف المتاحة" : "Available Gigs"}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center">{language === "ar" ? "الوظائف المتاحة" : "Available Gigs"}</h2>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
                 <Search className="h-4 w-4 mr-2" />
