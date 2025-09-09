@@ -242,31 +242,27 @@ export async function POST(request: NextRequest) {
     let result
 
     if (hasNewColumns) {
-      // Compose start_datetime on the DB using Africa/Cairo
+      // Compose start_datetime on the DB using Africa/Cairo via make_timestamptz
       if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
-      // Build SQL expression for start_datetime
-      // Cases:
-      // - Both date and time: use provided
-      // - Only time: combine with start_date if provided, else error
-      // - Only date: default 09:00
-      const startDatePart = start_date || null
-      const timePart = start_datetime || null
+      const startDatePart: string | null = start_date || null
+      const timePart: string | null = start_datetime || null
 
-      let startDateTimeExpr
-      if (startDatePart && timePart) {
-        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' ' + timePart}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
-      } else if (startDatePart && !timePart) {
-        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' 09:00'}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
-      } else if (!startDatePart && timePart) {
+      if (!startDatePart && timePart) {
         return NextResponse.json({ 
           error: "start_date is required when only time is provided" 
         }, { status: 400 })
       }
+
+      // Parse components for make_timestamptz
+      const [yy, mm, dd] = (startDatePart || "").split("-").map(Number)
+      const [hh, mi] = (timePart || "09:00").split(":").map(Number)
+
+      const startDateTimeExpr = sql`make_timestamptz(${yy}, ${mm}, ${dd}, ${hh}, ${mi}, 0, 'Africa/Cairo')`
 
       result = await sql`
         INSERT INTO gigs (
@@ -284,26 +280,26 @@ export async function POST(request: NextRequest) {
         RETURNING *
       `
     } else {
-      // Old schema: still compute start_datetime in DB with Africa/Cairo
+      // Old schema: compute start_datetime in DB with Africa/Cairo via make_timestamptz
       if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
-      const startDatePart = start_date || null
-      const timePart = start_datetime || null
+      const startDatePart: string | null = start_date || null
+      const timePart: string | null = start_datetime || null
 
-      let startDateTimeExpr
-      if (startDatePart && timePart) {
-        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' ' + timePart}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
-      } else if (startDatePart && !timePart) {
-        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' 09:00'}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
-      } else if (!startDatePart && timePart) {
+      if (!startDatePart && timePart) {
         return NextResponse.json({ 
           error: "start_date is required when only time is provided" 
         }, { status: 400 })
       }
+
+      const [yy, mm, dd] = (startDatePart || "").split("-").map(Number)
+      const [hh, mi] = (timePart || "09:00").split(":").map(Number)
+
+      const startDateTimeExpr = sql`make_timestamptz(${yy}, ${mm}, ${dd}, ${hh}, ${mi}, 0, 'Africa/Cairo')`
 
       result = await sql`
         INSERT INTO gigs (
