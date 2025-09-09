@@ -242,19 +242,29 @@ export async function POST(request: NextRequest) {
     let result
 
     if (hasNewColumns) {
-      // Compose start_datetime interpreted in Africa/Cairo with DST
+      // Compose start_datetime on the DB using Africa/Cairo
       if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
-      const utcISOString = toUtcFromZoned(start_date || null, start_datetime || null, 'Africa/Cairo')
+      // Build SQL expression for start_datetime
+      // Cases:
+      // - Both date and time: use provided
+      // - Only time: combine with start_date if provided, else error
+      // - Only date: default 09:00
+      const startDatePart = start_date || null
+      const timePart = start_datetime || null
 
-      // Validate datetime format
-      if (isNaN(Date.parse(utcISOString))) {
+      let startDateTimeExpr
+      if (startDatePart && timePart) {
+        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' ' + timePart}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
+      } else if (startDatePart && !timePart) {
+        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' 09:00'}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
+      } else if (!startDatePart && timePart) {
         return NextResponse.json({ 
-          error: "Invalid datetime format" 
+          error: "start_date is required when only time is provided" 
         }, { status: 400 })
       }
 
@@ -267,26 +277,31 @@ export async function POST(request: NextRequest) {
         )
         VALUES (
           ${brandId}, ${title}, ${description}, ${location}, 
-          ${utcISOString}, ${start_date || null}, ${end_date || null}, 
+          ${startDateTimeExpr}, ${start_date || null}, ${end_date || null}, 
           ${duration_hours}, ${pay_rate}, ${total_ushers_needed}, 
           ${skills_required || []}, ${is_recurring || false}
         )
         RETURNING *
       `
     } else {
-      // Use old schema without the new columns
+      // Old schema: still compute start_datetime in DB with Africa/Cairo
       if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
-      const utcISOString = toUtcFromZoned(start_date || null, start_datetime || null, 'Africa/Cairo')
+      const startDatePart = start_date || null
+      const timePart = start_datetime || null
 
-      // Validate datetime format
-      if (isNaN(Date.parse(utcISOString))) {
+      let startDateTimeExpr
+      if (startDatePart && timePart) {
+        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' ' + timePart}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
+      } else if (startDatePart && !timePart) {
+        startDateTimeExpr = sql`(to_timestamp(${startDatePart + ' 09:00'}, 'YYYY-MM-DD HH24:MI') AT TIME ZONE 'Africa/Cairo')`
+      } else if (!startDatePart && timePart) {
         return NextResponse.json({ 
-          error: "Invalid datetime format" 
+          error: "start_date is required when only time is provided" 
         }, { status: 400 })
       }
 
@@ -298,7 +313,7 @@ export async function POST(request: NextRequest) {
         )
         VALUES (
           ${brandId}, ${title}, ${description}, ${location}, 
-          ${utcISOString}, ${duration_hours}, ${pay_rate}, 
+          ${startDateTimeExpr}, ${duration_hours}, ${pay_rate}, 
           ${total_ushers_needed}, ${skills_required || []}
         )
         RETURNING *
