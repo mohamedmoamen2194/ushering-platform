@@ -1,6 +1,52 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
+// Convert a local date/time in a given IANA time zone to a UTC ISO string
+function toUtcFromZoned(datePart: string | null, timePart: string | null, timeZone: string): string {
+  // Expect datePart as YYYY-MM-DD or null, timePart as HH:MM or full ISO without TZ or null
+  // Build components
+  let year: number, month: number, day: number, hour = 0, minute = 0, second = 0
+
+  if (datePart) {
+    const [y, m, d] = datePart.split("-").map(Number)
+    year = y
+    month = m
+    day = d
+  } else if (timePart && /^\d{4}-\d{2}-\d{2}T/.test(timePart)) {
+    const d = new Date(timePart)
+    year = d.getUTCFullYear()
+    month = d.getUTCMonth() + 1
+    day = d.getUTCDate()
+  } else {
+    throw new Error("Invalid date/time input: missing date")
+  }
+
+  if (timePart) {
+    if (/^\d{2}:\d{2}$/.test(timePart)) {
+      const [h, mm] = timePart.split(":").map(Number)
+      hour = h
+      minute = mm
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(timePart)) {
+      const d = new Date(timePart)
+      hour = d.getHours()
+      minute = d.getMinutes()
+      second = d.getSeconds()
+    }
+  }
+
+  // Create a naive UTC date for the given components
+  const naiveUtc = new Date(Date.UTC(year!, month! - 1, day!, hour, minute, second))
+
+  // Compute the timezone offset at that instant using Intl
+  const locale = naiveUtc.toLocaleString("en-US", { timeZone })
+  const zoned = new Date(locale)
+  const offsetMinutes = (zoned.getTime() - naiveUtc.getTime()) / 60000
+
+  // Adjust the naive UTC by subtracting the offset to get true UTC instant for the zoned wall time
+  const trueUtc = new Date(naiveUtc.getTime() - offsetMinutes * 60000)
+  return trueUtc.toISOString()
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -196,33 +242,21 @@ export async function POST(request: NextRequest) {
     let result
 
     if (hasNewColumns) {
-      // Create the full datetime by combining date and time if both are provided
-      let fullDateTime = null
-      
-      if (start_date && start_datetime) {
-        // Combine date and time
-        fullDateTime = `${start_date}T${start_datetime}:00`
-      } else if (start_datetime) {
-        // Use datetime as is
-        fullDateTime = start_datetime
-      } else if (start_date) {
-        // Use date with default time (9 AM)
-        fullDateTime = `${start_date}T09:00:00`
-      } else {
+      // Compose start_datetime interpreted in Africa/Cairo with DST
+      if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
+      const utcISOString = toUtcFromZoned(start_date || null, start_datetime || null, 'Africa/Cairo')
+
       // Validate datetime format
-      if (isNaN(Date.parse(fullDateTime))) {
+      if (isNaN(Date.parse(utcISOString))) {
         return NextResponse.json({ 
           error: "Invalid datetime format" 
         }, { status: 400 })
       }
-
-      const dateObj = new Date(fullDateTime);              
-      const utcISOString = dateObj.toISOString();         
 
       result = await sql`
         INSERT INTO gigs (
@@ -241,25 +275,16 @@ export async function POST(request: NextRequest) {
       `
     } else {
       // Use old schema without the new columns
-      let fullDateTime = null
-      
-      if (start_date && start_datetime) {
-        // Combine date and time
-        fullDateTime = `${start_date}T${start_datetime}:00`
-      } else if (start_datetime) {
-        // Use datetime as is
-        fullDateTime = start_datetime
-      } else if (start_date) {
-        // Use date with default time (9 AM)
-        fullDateTime = `${start_date}T09:00:00`
-      } else {
+      if (!start_date && !start_datetime) {
         return NextResponse.json({ 
           error: "Either start_date or start_datetime must be provided" 
         }, { status: 400 })
       }
 
+      const utcISOString = toUtcFromZoned(start_date || null, start_datetime || null, 'Africa/Cairo')
+
       // Validate datetime format
-      if (isNaN(Date.parse(fullDateTime))) {
+      if (isNaN(Date.parse(utcISOString))) {
         return NextResponse.json({ 
           error: "Invalid datetime format" 
         }, { status: 400 })
@@ -273,7 +298,7 @@ export async function POST(request: NextRequest) {
         )
         VALUES (
           ${brandId}, ${title}, ${description}, ${location}, 
-          ${fullDateTime}, ${duration_hours}, ${pay_rate}, 
+          ${utcISOString}, ${duration_hours}, ${pay_rate}, 
           ${total_ushers_needed}, ${skills_required || []}
         )
         RETURNING *

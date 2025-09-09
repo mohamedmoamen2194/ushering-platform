@@ -520,7 +520,7 @@ export default function BrandDashboard() {
                         {newGig.start_date && newGig.end_date && newGig.start_date !== newGig.end_date && (
                           <p className="text-muted-foreground">
                             <span className="font-medium">{language === "ar" ? "المدة:" : "Duration:"}</span>{" "}
-                            {new Date(newGig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - {new Date(newGig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                            {new Date(newGig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })} - {new Date(newGig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })}
                           </p>
                         )}
                       </div>
@@ -562,25 +562,6 @@ export default function BrandDashboard() {
                 <Button onClick={() => setShowCreateGig(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   {language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="ml-2"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/test-db')
-                      const data = await response.json()
-                      if (data.success) {
-                        alert(`✅ Database connected! Total gigs: ${data.data.totalGigs}`)
-                      } else {
-                        alert(`❌ Database failed: ${data.error}`)
-                      }
-                    } catch (error) {
-                      alert('❌ Failed to test database connection')
-                    }
-                  }}
-                >
-                  🔍 Test DB
                 </Button>
               </div>
             </div>
@@ -646,7 +627,7 @@ export default function BrandDashboard() {
                           <p className="font-medium text-card-foreground">{language === "ar" ? "التاريخ" : "Date"}</p>
                           <p className="text-muted-foreground">
                             {gig.start_date && gig.end_date
-                              ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
+                              ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })}`
                               : gig.start_datetime 
                                 ? new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })
                                 : "N/A"
@@ -690,7 +671,7 @@ export default function BrandDashboard() {
                             {gig.start_date && gig.end_date && (
                               <p className="mt-1">
                                 <span className="font-medium">{language === "ar" ? "المدة:" : "Duration:"}</span>{" "}
-                                {new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - {new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
+                                {new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })} - {new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })}
                               </p>
                             )}
                           </div>

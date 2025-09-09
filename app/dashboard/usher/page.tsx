@@ -37,7 +37,7 @@ export default function UsherDashboard() {
       setLoading(true)
       console.log("🔄 Fetching fresh available gigs from database...")
       
-      const response = await fetch(`/api/gigs?t=${Date.now()}`)
+      const response = await fetch(`/api/gigs?userId=${user?.id}&role=usher&t=${Date.now()}`)
       const data = await response.json()
       
       if (data.success !== false) {
@@ -63,7 +63,12 @@ export default function UsherDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        console.log("✅ Fresh applied gigs fetched:", data.applications?.length || 0, "applications")
+        console.log(
+          "✅ Fresh applied gigs fetched:",
+          (data.applications || []).length,
+          "applications",
+          (data.applications || []).map((a: any) => ({ id: a.id, status: a.status, reviewed_at: a.reviewed_at }))
+        )
         setAppliedGigs(data.applications || [])
       } else {
         console.error("❌ Failed to fetch applied gigs:", data.error)
@@ -117,6 +122,26 @@ export default function UsherDashboard() {
   }
 
   useEffect(() => {
+    if (!user?.id) return
+
+    const intervalId = setInterval(() => {
+      fetchAppliedGigs()
+    }, 30000) // refresh every 30s
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAppliedGigs()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
     if (user?.id) {
       ensureProfile()
       fetchUserStats()
@@ -164,6 +189,7 @@ export default function UsherDashboard() {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: 'Africa/Cairo',
     })
   }
 
@@ -284,125 +310,140 @@ export default function UsherDashboard() {
           </div>
         </div>
 
-        {appliedGigs.length > 0 && (
-          <div className="space-y-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
+        <div className="space-y-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-center">{language === "ar" ? "طلباتي" : "My Applications"}</h2>
+          <p className="text-center text-xs text-muted-foreground">
+            {language === 'ar' ? 'عدد الطلبات:' : 'Applications:'} {appliedGigs.length}
+          </p>
+          {appliedGigs.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-6">
+                <p className="text-muted-foreground">
+                  {language === 'ar' ? 'لا توجد طلبات حتى الآن' : 'No applications yet'}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
             <div className="grid gap-4">
-              {appliedGigs.map((application: any) => (
-                <Card key={application.id} className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{application.gig_title}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{application.gig_location}</p>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-2">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {application.duration_hours}h {language === "ar" ? "يومياً" : "daily"}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            {application.pay_rate} {language === "ar" ? "ج.م/ساعة" : "EGP/hr"}
-                          </span>
-                          {application.start_datetime && (
+              {appliedGigs.map((application: any) => {
+                const normalizedStatus = (application.status && typeof application.status === 'string') ? application.status.toLowerCase() : undefined
+                const computedStatus = application.reviewed_at ? 'approved' : (normalizedStatus || 'pending')
+                return (
+                  <Card key={application.id} className="border-l-4 border-l-blue-500">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-white">{application.gig_title}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{application.gig_location}</p>
+                          
+                          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-2">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}
+                              {application.duration_hours}h {language === "ar" ? "يومياً" : "daily"}
                             </span>
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="h-3 w-3" />
+                              {application.pay_rate} {language === "ar" ? "ج.م/ساعة" : "EGP/hr"}
+                            </span>
+                            {application.start_datetime && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false,
+                                  timeZone: 'Africa/Cairo',
+                                })}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                            {application.start_date && application.end_date
+                              ? `${new Date(application.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(application.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
+                              : formatDate(application.gig_datetime)}
+                          </p>
+                          
+                          {application.start_datetime && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                🕐 {(application.start_time_24h || new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false,
+                                  timeZone: 'Africa/Cairo',
+                                }))} (24h)
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {application.start_date_display || new Date(application.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: 'Africa/Cairo' })}
+                              </span>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {language === "ar" ? "تقدمت في:" : "Applied on:"}{" "}
+                            {new Date(application.applied_at).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: 'Africa/Cairo' })}
+                          </p>
+                          {(typeof application.attended_days === 'number' && typeof application.total_days === 'number') && (
+                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                              {language === 'ar' ? 'الحضور:' : 'Attendance:'} {application.attended_days}/{application.total_days}
+                            </p>
                           )}
                         </div>
-
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                          {application.start_date && application.end_date
-                            ? `${new Date(application.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(application.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
-                            : formatDate(application.gig_datetime)}
-                        </p>
-                        
-                        {application.start_datetime && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                              🕐 {new Date(application.start_datetime).toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })} (24h)
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(application.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
-                            </span>
-                          </div>
-                        )}
-
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {language === "ar" ? "تقدمت في:" : "Applied on:"}{" "}
-                          {new Date(application.applied_at).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
-                        </p>
+                        <Badge
+                          className={
+                            computedStatus === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : computedStatus === "approved"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                          }
+                        >
+                          {computedStatus === "pending"
+                            ? (language === "ar" ? "قيد المراجعة" : "Pending")
+                            : computedStatus === "approved"
+                              ? (language === "ar" ? "مقبول" : "Approved")
+                              : (language === "ar" ? "مرفوض" : "Rejected")}
+                        </Badge>
                       </div>
-                      <Badge
-                        className={
-                          application.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : application.status === "approved"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                        }
-                      >
-                        {application.status === "pending"
-                          ? language === "ar"
-                            ? "قيد المراجعة"
-                            : "Pending"
-                          : application.status === "approved"
-                            ? language === "ar"
-                              ? "مقبول"
-                              : "Approved"
-                            : language === "ar"
-                              ? "مرفوض"
-                              : "Rejected"}
-                      </Badge>
-                    </div>
-                    
-                    {application.start_date && application.end_date && application.start_date !== application.end_date && (
-                      <div className="mt-3 p-2 bg-blue-50 rounded text-sm">
-                        <span className="font-medium text-blue-800">
-                          {language === "ar" ? "إجمالي الأرباح المتوقعة:" : "Total Expected Earnings:"}{" "}
-                        </span>
-                        <span className="font-bold text-blue-900">
-                          {(
-                            application.pay_rate *
-                            application.duration_hours *
-                            (Math.ceil(
-                              (new Date(application.end_date).getTime() - new Date(application.start_date).getTime()) / (1000 * 60 * 60 * 24),
-                            ) + 1)
-                          ).toLocaleString()}{" "}
-                          {language === "ar" ? "ج.م" : "EGP"}
-                        </span>
-                      </div>
-                    )}
+                      
+                      {application.start_date && application.end_date && application.start_date !== application.end_date && (
+                        <div className="mt-3 p-2 bg-blue-50 rounded text-sm">
+                          <span className="font-medium text-blue-800">
+                            {language === "ar" ? "إجمالي الأرباح المتوقعة:" : "Total Expected Earnings:"}{" "}
+                          </span>
+                          <span className="font-bold text-blue-900">
+                            {(
+                              application.pay_rate *
+                              application.duration_hours *
+                              (Math.ceil(
+                                (new Date(application.end_date).getTime() - new Date(application.start_date).getTime()) / (1000 * 60 * 60 * 24),
+                              ) + 1)
+                            ).toLocaleString()} {language === "ar" ? "ج.م" : "EGP"}
+                          </span>
+                        </div>
+                      )}
 
-                    {application.status === "approved" && application.brand_email && (
-                      <div className="mt-3 p-3 bg-green-50 rounded">
-                        <p className="text-sm text-green-800 font-medium mb-1">
-                          {language === "ar" ? "معلومات التواصل:" : "Contact Information:"}
-                        </p>
-                        <p className="text-sm text-green-700">
-                          <strong>{language === "ar" ? "الشركة:" : "Company:"}</strong> {application.company_name}
-                        </p>
-                        <p className="text-sm text-green-700">
-                          <strong>{language === "ar" ? "البريد الإلكتروني:" : "Email:"}</strong> {application.brand_email}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {computedStatus === "approved" && application.brand_email && (
+                        <div className="mt-3 p-3 bg-green-50 rounded">
+                          <p className="text-sm text-green-800 font-medium mb-1">
+                            {language === "ar" ? "معلومات التواصل:" : "Contact Information:"}
+                          </p>
+                          <p className="text-sm text-green-700">
+                            <strong>{language === "ar" ? "الشركة:" : "Company:"}</strong> {application.company_name}
+                          </p>
+                          <p className="text-sm text-green-700">
+                            <strong>{language === "ar" ? "البريد الإلكتروني:" : "Email:"}</strong> {application.brand_email}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="space-y-6">
           <div className="flex justify-between items-center">

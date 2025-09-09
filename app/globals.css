@@ -105,13 +105,14 @@
 }
 
 /* RTL support */
-[dir="rtl"] {
-  text-align: right;
-}
+/* Avoid overriding global text alignment to preserve .text-center */
+/* Flip only explicit horizontal flex directions; keep flex-col intact */
+[dir="rtl"] .flex-row { flex-direction: row-reverse; }
+[dir="rtl"] .flex-row-reverse { flex-direction: row; }
 
-[dir="rtl"] .flex {
-  flex-direction: row-reverse;
-}
+/* Optional: flip directional text utilities without affecting .text-center */
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
 
 [dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 1;

@@ -191,9 +191,7 @@ export default function ApplicationsPage() {
                   <h1 className="text-xl font-bold text-card-foreground">
                     {language === "ar" ? "إدارة الطلبات" : "Manage Applications"}
                   </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {language === "ar" ? "مراجعة وإدارة طلبات المضيفين" : "Review and manage usher applications"}
-                  </p>
+                  
                 </div>
               </div>
               <div className="flex items-center gap-2">

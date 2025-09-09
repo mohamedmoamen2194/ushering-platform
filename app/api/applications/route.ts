@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           FROM applications a
           JOIN gigs g ON a.gig_id = g.id
           WHERE a.usher_id = ${usherId} 
-          AND a.status = 'approved'
+          AND a.status IN ('pending', 'approved')
           AND g.status = 'active'
           AND g.start_date IS NOT NULL
           AND g.end_date IS NOT NULL
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
           const conflictingGig = conflictingApplications[0]
           return NextResponse.json(
             {
-              error: `You already have an approved application for "${conflictingGig.title}" that overlaps with this gig's dates.`,
+              error: `You already have another application (pending or approved) for "${conflictingGig.title}" that overlaps with this gig's dates.`,
               conflictingGig: conflictingGig.title,
             },
             { status: 400 },
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       // Update the rejected application to pending
       result = await sql`
         UPDATE applications 
-        SET status = 'pending', applied_at = NOW(), reviewed_at = NULL
+        SET status = LOWER('pending'), applied_at = NOW(), reviewed_at = NULL
         WHERE id = ${rejectedApp[0].id}
         RETURNING *
       `
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       // Create new application
       result = await sql`
         INSERT INTO applications (gig_id, usher_id, status)
-        VALUES (${gigId}, ${usherId}, 'pending')
+        VALUES (${gigId}, ${usherId}, LOWER('pending'))
         RETURNING *
       `
       console.log("Created new application:", result[0])
@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
 
     const result = await sql`
       UPDATE applications 
-      SET status = ${status}, reviewed_at = NOW()
+      SET status = LOWER(${status}), reviewed_at = NOW()
       WHERE id = ${applicationId}
       RETURNING *
     `

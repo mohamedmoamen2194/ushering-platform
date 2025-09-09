@@ -1,6 +1,30 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
+// Convert a local date/time in a given IANA time zone to a UTC ISO string
+function toUtcFromZoned(datePart: string, timePart: string, timeZone: string): string {
+  const [y, m, d] = datePart.split("-").map(Number)
+  const [hh, mm] = timePart.split(":").map(Number)
+  const naiveUtc = new Date(Date.UTC(y, m - 1, d, hh, mm, 0))
+  const locale = naiveUtc.toLocaleString("en-US", { timeZone })
+  const zoned = new Date(locale)
+  const offsetMinutes = (zoned.getTime() - naiveUtc.getTime()) / 60000
+  const trueUtc = new Date(naiveUtc.getTime() - offsetMinutes * 60000)
+  return trueUtc.toISOString()
+}
+
+// Format now as Cairo local date (YYYY-MM-DD)
+function getTodayCairoDate(): string {
+  const now = new Date()
+  const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit" })
+  return formatter.format(now) // YYYY-MM-DD
+}
+
+// Extract Cairo start time HH:MM from a UTC datetime
+function getGigStartTimeCairoHHMM(startDatetimeUtc: string): string {
+  return new Date(startDatetimeUtc).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Africa/Cairo" })
+}
+
 // Generate QR code for a gig (brand only)
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -11,9 +35,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Gig ID and Brand ID are required" }, { status: 400 })
     }
 
-    // Verify the gig belongs to this brand
+    // Verify the gig belongs to this brand and fetch date range
     const gigResult = await sql`
-      SELECT id, start_datetime, duration_hours, status
+      SELECT id, start_datetime, start_date, end_date, duration_hours, status
       FROM gigs 
       WHERE id = ${gigId} AND brand_id = ${brandId}
     `
@@ -28,25 +52,41 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Can only generate QR codes for active gigs" }, { status: 400 })
     }
 
-    // Calculate QR code expiration (10 minutes after gig starts)
-    const gigStartTime = new Date(gig.start_datetime)
-    const qrExpiresAt = new Date(gigStartTime.getTime() + (10 * 60 * 1000)) // 10 minutes
+    // Determine today's Cairo window
+    const todayCairo = getTodayCairoDate() // YYYY-MM-DD in Cairo
+    const startHHMM = getGigStartTimeCairoHHMM(gig.start_datetime)
 
-    // Check if current time is within the valid window
+    // If date range exists, ensure today is within [start_date, end_date]
+    if (gig.start_date && gig.end_date) {
+      if (todayCairo < gig.start_date || todayCairo > gig.end_date) {
+        return NextResponse.json({ 
+          error: "QR code can only be generated during the gig time window",
+          reason: "outside_date_range",
+          todayCairo, start_date: gig.start_date, end_date: gig.end_date
+        }, { status: 400 })
+      }
+    }
+
+    // Compute today's start window in UTC from Cairo local
+    const windowStartUtcISO = toUtcFromZoned(todayCairo, startHHMM, 'Africa/Cairo')
+    const windowStart = new Date(windowStartUtcISO)
+    const windowEnd = new Date(windowStart.getTime() + 10 * 60 * 1000)
+
     const now = new Date()
-    if (now < gigStartTime || now > qrExpiresAt) {
-      return NextResponse.json({ 
+    if (now < windowStart || now > windowEnd) {
+      return NextResponse.json({
         error: "QR code can only be generated during the gig time window",
-        gigStartTime: gigStartTime.toISOString(),
-        qrExpiresAt: qrExpiresAt.toISOString(),
+        reason: "outside_time_window",
+        windowStart: windowStart.toISOString(),
+        windowEnd: windowEnd.toISOString(),
         currentTime: now.toISOString()
       }, { status: 400 })
     }
 
-    // Generate new QR code session
+    // Generate new QR code session expiring at window end
     const qrResult = await sql`
       INSERT INTO qr_code_sessions (gig_id, qr_code_token, expires_at)
-      VALUES (${gigId}, uuid_generate_v4(), ${qrExpiresAt})
+      VALUES (${gigId}, uuid_generate_v4(), ${windowEnd.toISOString()})
       RETURNING id, qr_code_token, expires_at
     `
 
@@ -59,7 +99,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         token: qrSession.qr_code_token,
         expiresAt: qrSession.expires_at,
         gigId: gigId,
-        validUntil: qrExpiresAt
+        validFrom: windowStart.toISOString(),
+        validUntil: windowEnd.toISOString()
       }
     })
   } catch (error) {

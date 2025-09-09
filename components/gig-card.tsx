@@ -40,10 +40,13 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: 'Africa/Cairo',
     })
   }
 
   const getButtonState = () => {
+    const normalizedStatus = typeof gig.application_status === 'string' ? gig.application_status.toLowerCase() : gig.application_status
+
     // Check if gig is full
     if (gig.approved_ushers >= gig.total_ushers_needed) {
       return {
@@ -54,7 +57,7 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
     }
 
     // Check application status
-    if (gig.application_status === "approved") {
+    if (normalizedStatus === "approved") {
       return {
         disabled: true,
         variant: "default" as const,
@@ -62,7 +65,7 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
       }
     }
 
-    if (gig.application_status === "pending") {
+    if (normalizedStatus === "pending") {
       return {
         disabled: true,
         variant: "secondary" as const,
