@@ -603,10 +603,10 @@ export default function BrandDashboard() {
                           {gig.start_datetime && (
                             <div className="flex items-center gap-2 mt-2">
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                🕐 {formatStartTime(gig.start_datetime)}
+                                🕐 {gig.start_time_24h || formatStartTime(gig.start_datetime)}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US",{ timeZone: "Africa/Cairo" })}
+                                {gig.start_date_display || new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US",{ timeZone: "Africa/Cairo" })}
                               </span>
                             </div>
                           )}
@@ -629,7 +629,7 @@ export default function BrandDashboard() {
                             {gig.start_date && gig.end_date
                               ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })}`
                               : gig.start_datetime 
-                                ? new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" })
+                                ? (gig.start_date_display || new Date(gig.start_datetime).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { timeZone: "Africa/Cairo" }))
                                 : "N/A"
                             }
                           </p>
@@ -666,7 +666,7 @@ export default function BrandDashboard() {
                           <div className="text-sm text-muted-foreground">
                             <p>
                               <span className="font-medium">{language === "ar" ? "يبدأ في:" : "Starts at:"}</span>{" "}
-                              {formatDateTime(gig.start_datetime)}
+                              {gig.start_date_display && gig.start_time_24h ? `${gig.start_date_display} ${gig.start_time_24h}` : formatDateTime(gig.start_datetime)}
                             </p>
                             {gig.start_date && gig.end_date && (
                               <p className="mt-1">

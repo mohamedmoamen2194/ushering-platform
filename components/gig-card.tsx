@@ -22,6 +22,8 @@ interface GigCardProps {
     application_status?: string | null
     start_date?: string
     end_date?: string
+    start_date_display?: string
+    start_time_24h?: string
   }
   language: "ar" | "en"
   userRole?: "usher" | "brand"
@@ -162,13 +164,15 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
         <div>
           <p className="text-sm font-medium mb-2">{t("date")}:</p>
           <p className="text-sm text-muted-foreground">
-                          {gig.start_date && gig.end_date
+              {gig.start_date && gig.end_date
                 ? `${new Date(gig.start_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")} - ${new Date(gig.end_date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}`
-                : gig.start_datetime 
-                  ? formatDate(gig.start_datetime)
-                  : gig.datetime 
-                    ? formatDate(gig.datetime)
-                    : "No date set"}
+                : gig.start_date_display && gig.start_time_24h
+                  ? `${gig.start_date_display} ${gig.start_time_24h}`
+                  : gig.start_datetime 
+                    ? formatDate(gig.start_datetime)
+                    : gig.datetime 
+                      ? formatDate(gig.datetime)
+                      : "No date set"}
           </p>
         </div>
 

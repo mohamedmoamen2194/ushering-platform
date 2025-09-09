@@ -71,7 +71,9 @@ export async function GET(request: NextRequest) {
       const result = await sql`
         SELECT g.*, 
                (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'approved') as approved_ushers,
-               (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'pending') as pending_applications
+               (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'pending') as pending_applications,
+               to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'HH24:MI') as start_time_24h,
+               to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'YYYY-MM-DD') as start_date_display
         FROM gigs g
         WHERE g.brand_id = ${userId}
         ORDER BY g.start_datetime DESC
@@ -93,7 +95,9 @@ export async function GET(request: NextRequest) {
         gigQuery = sql`
           SELECT g.*, u.name as brand_name, b.company_name, u.email as brand_email,
                  (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'approved') as approved_ushers,
-                 (SELECT status FROM applications a WHERE a.gig_id = g.id AND a.usher_id = ${userId} ORDER BY a.applied_at DESC LIMIT 1) as application_status
+                 (SELECT status FROM applications a WHERE a.gig_id = g.id AND a.usher_id = ${userId} ORDER BY a.applied_at DESC LIMIT 1) as application_status,
+                 to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'HH24:MI') as start_time_24h,
+                 to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'YYYY-MM-DD') as start_date_display
           FROM gigs g
           JOIN users u ON g.brand_id = u.id
           JOIN brands b ON u.id = b.user_id
@@ -113,7 +117,9 @@ export async function GET(request: NextRequest) {
         gigQuery = sql`
           SELECT g.*, u.name as brand_name, b.company_name,
                  (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'approved') as approved_ushers,
-                 NULL as application_status
+                 NULL as application_status,
+                 to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'HH24:MI') as start_time_24h,
+                 to_char((g.start_datetime AT TIME ZONE 'Africa/Cairo'), 'YYYY-MM-DD') as start_date_display
           FROM gigs g
           JOIN users u ON g.brand_id = u.id
           JOIN brands b ON u.id = b.user_id
