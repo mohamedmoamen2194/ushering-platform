@@ -16,6 +16,8 @@ interface QRCodeData {
   gigTitle: string
   gigStartTime: string
   durationHours: number
+  validFrom?: string
+  validUntil?: string
 }
 
 interface QRCodeDisplayProps {
@@ -32,26 +34,49 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
   const [error, setError] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState<string>("")
   const { language, isRTL } = useLanguage()
+
+  // Track server-provided window for smarter scheduling
+  const [serverWindowStart, setServerWindowStart] = useState<Date | null>(null)
+  const [serverWindowEnd, setServerWindowEnd] = useState<Date | null>(null)
+  const [nextAttemptAt, setNextAttemptAt] = useState<Date | null>(null)
+  const [autoTimerId, setAutoTimerId] = useState<ReturnType<typeof setTimeout> | null>(null)
+
   const parseStartTime = (s?: string): Date | null => {
     if (!s) return null
-    // date-only 'YYYY-MM-DD'
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
       const [y, m, d] = s.split("-").map(Number)
-      // use UTC midnight (unambiguous)
       return new Date(Date.UTC(y, m - 1, d))
     }
-    // otherwise rely on Date parsing for full ISO strings
     const d = new Date(s)
     if (isNaN(d.getTime())) return null
     return d
+  }
+
+  const formatCairoTime = (d: Date | null) => {
+    if (!d) return "?"
+    return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+      timeZone: "Africa/Cairo",
+    }).format(d)
+  }
+
+  const formatLocalTime = (d: Date | null) => {
+    if (!d) return "?"
+    return new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(d)
   }
 
   const generateQRCode = async () => {
     try {
       setLoading(true)
       setError(null)
-      console.log("[QR] generateQRCode() POST /api/gigs/%s/qr-code", gigId)
-
       const response = await fetch(`/api/gigs/${gigId}/qr-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,11 +84,27 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
       })
 
       const data = await response.json()
-      console.log("[QR] generate response:", data)
-
       if (data.success && data.qrCode) {
         setQrCode(data.qrCode)
+        setServerWindowStart(data.qrCode.validFrom ? new Date(data.qrCode.validFrom) : null)
+        setServerWindowEnd(data.qrCode.validUntil ? new Date(data.qrCode.validUntil) : null)
+        setNextAttemptAt(null)
       } else {
+        // Capture server-side timing hints for scheduling
+        if (data.reason === "outside_time_window") {
+          const ws = data.windowStart ? new Date(data.windowStart) : null
+          const we = data.windowEnd ? new Date(data.windowEnd) : null
+          setServerWindowStart(ws)
+          setServerWindowEnd(we)
+          // If we are before windowStart, schedule a single retry at windowStart
+          const now = new Date()
+          if (ws && now < ws) {
+            setNextAttemptAt(ws)
+          } else if (we && now > we) {
+            // Window passed; no auto retry
+            setNextAttemptAt(null)
+          }
+        }
         setError(data.error || "Failed to generate QR")
       }
     } catch (err) {
@@ -84,6 +125,7 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
 
       if (data.success) {
         setQrCode(data.qrCode)
+        // If server returns start/end in GET in future, capture them here as well
       } else {
         setQrCode(null)
       }
@@ -128,19 +170,44 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
 
   const isWithinTimeWindow = () => {
     const now = new Date()
+    // Prefer server-provided window when available
+    if (serverWindowStart && serverWindowEnd) {
+      return now >= serverWindowStart && now <= serverWindowEnd
+    }
     const startDate = parseStartTime(startTime)
     if (!startDate) {
-      // can't determine start => disallow generation
-      console.warn("[QR] invalid startTime prop:", startTime)
-      return false
+      return true
     }
-
-    const qrExpiresAt = new Date(startDate.getTime() + 10 * 60 * 1000) // 10 minutes after start
-    // you used durationHours for endTime previously; keep for logic if needed
-    // const endTime = new Date(startDate.getTime() + durationHours * 3600 * 1000)
-    console.debug("[QR] now:", now.toISOString(), "start:", startDate.toISOString(), "qrExpiresAt:", qrExpiresAt.toISOString())
+    const qrExpiresAt = new Date(startDate.getTime() + 10 * 60 * 1000)
     return now >= startDate && now <= qrExpiresAt
   }
+
+  // One-shot scheduler: set a timeout for nextAttemptAt (from server response)
+  useEffect(() => {
+    if (autoTimerId) {
+      clearTimeout(autoTimerId)
+      setAutoTimerId(null)
+    }
+    if (!qrCode && nextAttemptAt) {
+      const now = Date.now()
+      const delay = Math.max(0, nextAttemptAt.getTime() - now)
+      const id = setTimeout(() => {
+        generateQRCode()
+      }, delay)
+      setAutoTimerId(id)
+    }
+    return () => {
+      if (autoTimerId) clearTimeout(autoTimerId)
+    }
+  }, [qrCode, nextAttemptAt])
+
+  // Try once immediately if within window and no code
+  useEffect(() => {
+    if (!qrCode && isWithinTimeWindow()) {
+      generateQRCode()
+    }
+  }, [gigId, brandId, startTime, serverWindowStart, serverWindowEnd])
+
   const canGenerateQR = isWithinTimeWindow() && !qrCode
 
     // Build user-facing QR payload: prefer a URL that opens check-in route in browser
@@ -173,7 +240,6 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
         {qrCode ? (
           <div className="text-center space-y-4">
             <div className="p-4 bg-gray-50 rounded-lg flex flex-col items-center">
-              {/* Render actual QR graphic here */}
               {payloadUrl ? (
                 <div style={{ background: "white", padding: 8, borderRadius: 8 }}>
                   <QRCode value={payloadUrl} size={160} />
@@ -202,7 +268,7 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
             </div>
 
             <Button onClick={fetchActiveQRCode} variant="outline" size="sm" disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`${loading ? "animate-spin" : ""} h-4 w-4 mr-2`} />
               {language === "ar" ? "تحديث" : "Refresh"}
             </Button>
           </div>
@@ -213,18 +279,35 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
               <p className="text-sm text-gray-600">
                 {language === "ar" ? "لا يوجد رمز QR نشط" : "No active QR code"}
               </p>
+              {error && (
+                <p className="text-xs text-red-600 mt-2">{error}</p>
+              )}
+              {(serverWindowStart || serverWindowEnd) && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {language === "ar"
+                    ? `نافذة الخادم (القاهرة): ${formatCairoTime(serverWindowStart)} → ${formatCairoTime(serverWindowEnd)} (المحلي: ${formatLocalTime(serverWindowStart)} → ${formatLocalTime(serverWindowEnd)})`
+                    : `Server window (Cairo): ${formatCairoTime(serverWindowStart)} → ${formatCairoTime(serverWindowEnd)} (local: ${formatLocalTime(serverWindowStart)} → ${formatLocalTime(serverWindowEnd)})`}
+                </p>
+              )}
+              {nextAttemptAt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {language === "ar"
+                    ? `سيتم المحاولة تلقائيًا عند ${formatLocalTime(nextAttemptAt)}`
+                    : `Will auto-try at ${formatLocalTime(nextAttemptAt)}`}
+                </p>
+              )}
             </div>
 
-            {canGenerateQR ? (
-              <Button onClick={generateQRCode} disabled={loading} className="w-full">
-                {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <QrCode className="h-4 w-4 mr-2" />}
-                {language === "ar" ? "إنشاء رمز QR" : "Generate QR Code"}
-              </Button>
-            ) : (
+            <Button onClick={generateQRCode} disabled={loading || !!qrCode} className="w-full">
+              {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <QrCode className="h-4 w-4 mr-2" />}
+              {language === "ar" ? "إنشاء رمز QR" : "Generate QR Code"}
+            </Button>
+
+            {!canGenerateQR && (
               <div className="text-sm text-gray-500">
                 {language === "ar"
-                  ? "يمكن إنشاء رمز QR فقط خلال نافذة الوقت المحددة (10 دقائق بعد بدء الحدث)"
-                  : "QR code can only be generated during the time window (10 minutes after event starts)"}
+                  ? "يتم إنشاء رمز QR تلقائيًا خلال نافذة الوقت المسموح بها. يمكنك أيضًا المحاولة يدويًا."
+                  : "QR auto-generates during the allowed window. You can also try manually."}
               </div>
             )}
           </div>

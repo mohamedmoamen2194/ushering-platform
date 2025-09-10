@@ -68,8 +68,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Compute today's start window in UTC from Cairo local
-    const windowStartUtcISO = toUtcFromZoned(todayCairo, startHHMM, 'Africa/Cairo')
-    const windowStart = new Date(windowStartUtcISO)
+    const [yy, mm, dd] = todayCairo.split("-").map(Number)
+    const [hh, mi] = startHHMM.split(":").map(Number)
+    const windowRow = await sql`SELECT make_timestamptz(${yy}, ${mm}, ${dd}, ${hh}, ${mi}, 0, 'Africa/Cairo') AS window_start`
+    const windowStart = new Date(windowRow[0].window_start)
     const windowEnd = new Date(windowStart.getTime() + 10 * 60 * 1000)
 
     const now = new Date()
@@ -79,7 +81,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         reason: "outside_time_window",
         windowStart: windowStart.toISOString(),
         windowEnd: windowEnd.toISOString(),
-        currentTime: now.toISOString()
+        currentTime: now.toISOString(),
+        storedStartUtc: gig.start_datetime,
+        gigStartCairoHHMM: startHHMM
       }, { status: 400 })
     }
 
@@ -134,22 +138,80 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       LIMIT 1
     `
 
-    if (qrResult.length === 0) {
+    if (qrResult.length > 0) {
+      const qrCode = qrResult[0]
+      return NextResponse.json({
+        success: true,
+        qrCode: {
+          id: qrCode.id,
+          token: qrCode.qr_code_token,
+          expiresAt: qrCode.expires_at,
+          isActive: qrCode.is_active,
+          gigTitle: qrCode.title,
+          gigStartTime: qrCode.start_datetime,
+          durationHours: qrCode.duration_hours
+        }
+      })
+    }
+
+    // No active QR: attempt auto-generation if within the allowed time window
+    const gigRows = await sql`
+      SELECT id, brand_id, title, start_datetime, start_date, end_date, duration_hours, status
+      FROM gigs
+      WHERE id = ${gigId} AND brand_id = ${brandId}
+      LIMIT 1
+    `
+
+    if (gigRows.length === 0) {
+      return NextResponse.json({ error: "Gig not found or access denied" }, { status: 404 })
+    }
+
+    const gig = gigRows[0]
+    if (gig.status !== 'active') {
+      return NextResponse.json({ error: "Gig is not active" }, { status: 400 })
+    }
+
+    const todayCairo = getTodayCairoDate()
+    const startHHMM = getGigStartTimeCairoHHMM(gig.start_datetime)
+
+    if (gig.start_date && gig.end_date) {
+      if (todayCairo < gig.start_date || todayCairo > gig.end_date) {
+        return NextResponse.json({ error: "No active QR code found for this gig" }, { status: 404 })
+      }
+    }
+
+    const windowStartUtcISO = toUtcFromZoned(todayCairo, startHHMM, 'Africa/Cairo')
+    const [yy2, mm2, dd2] = todayCairo.split("-").map(Number)
+    const [hh2, mi2] = startHHMM.split(":").map(Number)
+    const windowRow2 = await sql`SELECT make_timestamptz(${yy2}, ${mm2}, ${dd2}, ${hh2}, ${mi2}, 0, 'Africa/Cairo') AS window_start`
+    const windowStart = new Date(windowRow2[0].window_start)
+    const windowEnd = new Date(windowStart.getTime() + 10 * 60 * 1000)
+
+    const now = new Date()
+    if (now < windowStart || now > windowEnd) {
       return NextResponse.json({ error: "No active QR code found for this gig" }, { status: 404 })
     }
 
-    const qrCode = qrResult[0]
+    // Auto-create QR since we're within the window
+    const insertResult = await sql`
+      INSERT INTO qr_code_sessions (gig_id, qr_code_token, expires_at)
+      VALUES (${gigId}, uuid_generate_v4(), ${windowEnd.toISOString()})
+      RETURNING id, qr_code_token, expires_at
+    `
 
+    const newQr = insertResult[0]
     return NextResponse.json({
       success: true,
       qrCode: {
-        id: qrCode.id,
-        token: qrCode.qr_code_token,
-        expiresAt: qrCode.expires_at,
-        isActive: qrCode.is_active,
-        gigTitle: qrCode.title,
-        gigStartTime: qrCode.start_datetime,
-        durationHours: qrCode.duration_hours
+        id: newQr.id,
+        token: newQr.qr_code_token,
+        expiresAt: newQr.expires_at,
+        isActive: true,
+        gigTitle: gig.title,
+        gigStartTime: gig.start_datetime,
+        durationHours: gig.duration_hours,
+        validFrom: windowStart.toISOString(),
+        validUntil: windowEnd.toISOString()
       }
     })
   } catch (error) {

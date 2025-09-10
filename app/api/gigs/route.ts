@@ -256,9 +256,9 @@ export async function POST(request: NextRequest) {
       }
 
       const startDatePart: string | null = start_date || null
-      const timePart: string | null = start_datetime || null
+      const timePartRaw: string | null = start_datetime || null
 
-      if (!startDatePart && timePart) {
+      if (!startDatePart && timePartRaw) {
         return NextResponse.json({ 
           error: "start_date is required when only time is provided" 
         }, { status: 400 })
@@ -266,7 +266,32 @@ export async function POST(request: NextRequest) {
 
       // Parse components for make_timestamptz
       const [yy, mm, dd] = (startDatePart || "").split("-").map(Number)
-      const [hh, mi] = (timePart || "09:00").split(":").map(Number)
+
+      // Accept either HH:MM or an ISO-like string
+      let hh = 0, mi = 0
+      if (timePartRaw) {
+        if (/^\d{2}:\d{2}$/.test(timePartRaw)) {
+          const [h, m] = timePartRaw.split(":").map(Number)
+          hh = h; mi = m
+        } else {
+          const parsed = new Date(timePartRaw)
+          if (isNaN(parsed.getTime())) {
+            return NextResponse.json({ error: "Invalid start_datetime format" }, { status: 400 })
+          }
+          // Interpret provided time as wall time in Cairo by extracting local clock parts in Cairo
+          const cairoFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Cairo", hour: "2-digit", minute: "2-digit", hour12: false })
+          const parts = cairoFmt.formatToParts(parsed)
+          const hourStr = parts.find(p => p.type === 'hour')?.value || "00"
+          const minStr = parts.find(p => p.type === 'minute')?.value || "00"
+          hh = parseInt(hourStr, 10)
+          mi = parseInt(minStr, 10)
+        }
+      }
+
+      // Basic validation
+      if (!yy || !mm || !dd || hh < 0 || hh > 23 || mi < 0 || mi > 59) {
+        return NextResponse.json({ error: "Invalid start date/time components" }, { status: 400 })
+      }
 
       const startDateTimeExpr = sql`make_timestamptz(${yy}, ${mm}, ${dd}, ${hh}, ${mi}, 0, 'Africa/Cairo')`
 

@@ -685,13 +685,13 @@ export default function BrandDashboard() {
                             <QrCode className="h-4 w-4" />
                             {language === "ar" ? "رمز QR للحدث" : "Event QR Code"}
                           </h4>
-                          <QRCodeDisplay
-                            gigId={gig.id}
-                            brandId={user?.id || 0}
-                            gigTitle={gig.title}
-                            startTime={formatDateTime(gig.start_datetime || gig.start_date)}
-                            durationHours={gig.duration_hours}
-                          />
+                                                      <QRCodeDisplay
+                              gigId={gig.id}
+                              brandId={user?.id || 0}
+                              gigTitle={gig.title}
+                              startTime={gig.start_datetime || gig.start_date}
+                              durationHours={gig.duration_hours}
+                            />
                         </div>
                       )}
                       
