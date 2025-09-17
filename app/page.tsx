@@ -80,7 +80,7 @@ export default function HomePage() {
         <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
           {/* Logo */}
           <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
-            <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
           </div>
           {/* Header Text */}
           <div className="text-center mb-2">

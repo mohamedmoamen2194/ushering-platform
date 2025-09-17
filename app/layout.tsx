@@ -22,7 +22,12 @@ const notoSansArabic = Noto_Sans_Arabic({
 export const metadata: Metadata = {
   title: "Aura",
   description: "Connect brands with professional ushers for North Coast summer events",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg"
+  }
 }
 
 export default function RootLayout({

@@ -225,7 +225,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="flex items-center justify-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+              <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
             </div>
           </Link>
           <div className="flex justify-center items-center gap-4">

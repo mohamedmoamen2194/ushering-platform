@@ -266,18 +266,18 @@ export default function BrandDashboard() {
         <header className="bg-card shadow-sm border-b border-border">
           <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
             {/* Logo */}
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
               <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
             </div>
             {/* Header Text */}
             <div className="text-center mb-2">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-card-foreground">{user.profile?.company_name || user.name}</h1>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{user.profile?.company_name || user.name}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 {language === "ar" ? "لوحة تحكم العلامة التجارية" : "Brand Dashboard"}
               </p>
             </div>
             {/* Header Actions */}
-            <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2 mt-3 w-full">
+            <div className="flex flex-wrap justify-center items-center gap-2 mt-2 w-full">
               <ThemeToggle />
               <Link href="/dashboard/brand/applications">
                 <Button variant="ghost" size="sm">
@@ -297,9 +297,9 @@ export default function BrandDashboard() {
           </div>
         </header>
 
-        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="container mx-auto px-4 py-8">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-card-foreground">
@@ -345,7 +345,7 @@ export default function BrandDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <Link href="/dashboard/brand/applications">
               <Card className="cursor-pointer hover:shadow-md transition-shadow bg-card border-border">
                 <CardContent className="p-6">
@@ -382,7 +382,7 @@ export default function BrandDashboard() {
                   </CardContent>
                 </Card>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogContent className="bg-card border-border">
                 <DialogHeader>
                   <DialogTitle className="text-card-foreground">{language === "ar" ? "إنشاء وظيفة جديدة" : "Create New Gig"}</DialogTitle>
                   <p className="text-sm text-muted-foreground mt-2">
@@ -398,7 +398,7 @@ export default function BrandDashboard() {
                       id="title"
                       value={newGig.title}
                       onChange={(e) => setNewGig({ ...newGig, title: e.target.value })}
-                      className="bg-background border-border text-foreground pr-10"
+                      className="bg-background border-border text-foreground"
                       placeholder={language === "ar" ? "مثال: مضيف لحدث تجاري" : "e.g., Usher for Business Event"}
                     />
                   </div>
@@ -408,11 +408,11 @@ export default function BrandDashboard() {
                       id="description"
                       value={newGig.description}
                       onChange={(e) => setNewGig({ ...newGig, description: e.target.value })}
-                      className="bg-background border-border text-foreground pr-10"
+                      className="bg-background border-border text-foreground"
                       placeholder={language === "ar" ? "وصف تفصيلي للوظيفة والمتطلبات" : "Detailed description of the gig and requirements"}
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="location" className="text-card-foreground">{language === "ar" ? "الموقع" : "Location"}</Label>
                       <Input
@@ -435,112 +435,45 @@ export default function BrandDashboard() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <div className="sm:col-span-2">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
                       <Label htmlFor="start_date" className="text-card-foreground">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
-                      <div className="relative w-full">
-                        <Input
-                          id="start_date"
-                          type="date"
-                          value={newGig.start_date}
-                          onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })}
-                          className="bg-background border-border text-foreground w-full pr-12 h-11 text-base"
-                        />
-                        <button
-                          type="button"
-                          aria-label={language === "ar" ? "فتح التقويم" : "Open calendar"}
-                          onClick={() => {
-                            const el = document.getElementById("start_date") as HTMLInputElement | null
-                            if (el) {
-                              // Prefer native picker when supported
-                              // @ts-ignore
-                              if (typeof el.showPicker === "function") {
-                                // @ts-ignore
-                                el.showPicker()
-                              } else {
-                                el.click()
-                                el.focus()
-                              }
-                            }
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted/50"
-                        >
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={newGig.start_date}
+                        onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
                     </div>
                     <div>
                       <Label htmlFor="start_datetime" className="text-card-foreground">{language === "ar" ? "وقت البداية" : "Start Time"}</Label>
-                      <div className="relative w-full">
-                        <Input
-                          id="start_datetime"
-                          type="time"
-                          value={newGig.start_datetime}
-                          onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })}
-                          className="bg-background border-border text-foreground w-full pr-12 h-11 text-base"
-                        />
-                        <button
-                          type="button"
-                          aria-label={language === "ar" ? "فتح اختيار الوقت" : "Open time picker"}
-                          onClick={() => {
-                            const el = document.getElementById("start_datetime") as HTMLInputElement | null
-                            if (el) {
-                              // @ts-ignore
-                              if (typeof el.showPicker === "function") {
-                                // @ts-ignore
-                                el.showPicker()
-                              } else {
-                                el.click()
-                                el.focus()
-                              }
-                            }
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted/50"
-                        >
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
+                      <Input
+                        id="start_datetime"
+                        type="time"
+                        value={newGig.start_datetime}
+                        onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
                       <p className="text-xs text-muted-foreground mt-1">
                         {language === "ar" ? "مطلوب لإنشاء رمز QR" : "Required for QR code generation"}
                       </p>
                     </div>
-                    <div className="sm:col-span-2">
+                    <div>
                       <Label htmlFor="end_date" className="text-card-foreground">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
-                      <div className="relative w-full">
-                        <Input
-                          id="end_date"
-                          type="date"
-                          value={newGig.end_date}
-                          onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })}
-                          className="bg-background border-border text-foreground w-full pr-12 h-11 text-base"
-                        />
-                        <button
-                          type="button"
-                          aria-label={language === "ar" ? "فتح التقويم" : "Open calendar"}
-                          onClick={() => {
-                            const el = document.getElementById("end_date") as HTMLInputElement | null
-                            if (el) {
-                              // @ts-ignore
-                              if (typeof el.showPicker === "function") {
-                                // @ts-ignore
-                                el.showPicker()
-                              } else {
-                                el.click()
-                                el.focus()
-                              }
-                            }
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted/50"
-                        >
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        value={newGig.end_date}
+                        onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })}
+                        className="bg-background border-border text-foreground"
+                      />
                       <p className="text-xs text-muted-foreground mt-1">
                         {language === "ar" ? "اختياري - إذا لم يتم تحديده، سيتم استخدام تاريخ البداية" : "Optional - if not set, start date will be used"}
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="duration_hours" className="text-card-foreground">{language === "ar" ? "ساعات يومية" : "Daily Hours"}</Label>
                       <Input
@@ -640,7 +573,7 @@ export default function BrandDashboard() {
             ) : gigs.length === 0 ? (
               <Card className="bg-card border-border">
                 <CardContent className="p-8 text-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                     <Briefcase className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <h3 className="text-lg font-semibold text-card-foreground mb-2">
@@ -668,7 +601,7 @@ export default function BrandDashboard() {
                           <CardTitle className="text-lg text-card-foreground">{gig.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">{gig.location}</p>
                           {gig.start_datetime && (
-                            <div className="flex items-center gap-1 sm:gap-2 mt-3">
+                            <div className="flex items-center gap-2 mt-2">
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                                 🕐 {gig.start_time_24h || formatStartTime(gig.start_datetime)}
                               </span>
@@ -689,7 +622,7 @@ export default function BrandDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm mb-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mb-4">
                         <div>
                           <p className="font-medium text-card-foreground">{language === "ar" ? "التاريخ" : "Date"}</p>
                           <p className="text-muted-foreground">
@@ -763,7 +696,7 @@ export default function BrandDashboard() {
                       )}
                       
                       {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-4 border-t">
+                      <div className="flex gap-2 mt-4 pt-4 border-t">
                         <Link href={`/dashboard/brand/applications?gigId=${gig.id}`}>
                           <Button variant="outline" size="sm">
                             <UserCheck className="h-4 w-4 mr-2" />

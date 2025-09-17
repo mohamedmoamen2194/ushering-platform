@@ -199,7 +199,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+              <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function SetupPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+              <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
             </div>
           </div>
           <p className="text-gray-600">Database Configuration & Setup</p>
