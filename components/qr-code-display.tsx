@@ -214,9 +214,9 @@ export function QRCodeDisplay({ gigId, brandId, gigTitle, startTime, durationHou
   const buildPayloadUrl = () => {
     if (!qrCode) return ""
     if (typeof window === "undefined") return JSON.stringify({ id: qrCode.id, token: qrCode.token })
-    // change /checkin to whatever endpoint you handle on frontend/server
     const origin = window.location.origin
-    return `${origin}/checkin?gigId=${encodeURIComponent(gigId)}&token=${encodeURIComponent(qrCode.token)}`
+    // Default to check-in. For check-out, organizer can share with &action=check_out
+    return `${origin}/checkin?gigId=${encodeURIComponent(gigId)}&token=${encodeURIComponent(qrCode.token)}&action=check_in`
   }
 
   const payloadUrl = buildPayloadUrl()

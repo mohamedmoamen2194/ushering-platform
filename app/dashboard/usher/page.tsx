@@ -90,10 +90,11 @@ export default function UsherDashboard() {
       
       if (data.success !== false) {
         console.log("✅ Fresh usher stats fetched:", data)
+        const s = data.stats || {}
         setStats({
-          totalEarnings: data.totalEarnings || 0,
-          completedGigs: data.completedGigs || 0,
-          rating: data.rating || 0,
+          totalEarnings: s.total_earnings || s.totalEarnings || 0,
+          completedGigs: s.completed_gigs || s.completedGigs || 0,
+          rating: s.rating || 0,
         })
       } else {
         console.error("❌ Failed to fetch usher stats:", data.error)

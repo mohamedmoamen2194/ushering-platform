@@ -609,14 +609,13 @@ export default function BrandDashboard() {
 
           {/* Gigs Section */}
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
               <h2 className="text-2xl font-bold text-card-foreground">
                 {language === "ar" ? "الوظائف الحالية" : "Current Gigs"}
               </h2>
-              <div className="flex justify-end mb-4">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
                 <Button 
-                  variant="outline" 
-                  className="mr-2"
+                  variant="outline"
                   onClick={() => {
                     console.log("🔄 Manual refresh requested...")
                     fetchBrandStats()
