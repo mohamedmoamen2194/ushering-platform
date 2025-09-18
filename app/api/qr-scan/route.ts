@@ -20,11 +20,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Verify QR code is valid and active
+    // Verify QR code is valid and active (fetch only required fields)
     const qrResult = await sql`
       SELECT qcs.id, qcs.gig_id, qcs.expires_at, qcs.is_active,
-             g.title, g.start_datetime, g.end_datetime, g.duration_hours, g.pay_rate,
-             g.brand_id
+             g.title, g.duration_hours, g.pay_rate
       FROM qr_code_sessions qcs
       JOIN gigs g ON qcs.gig_id = g.id
       WHERE qcs.qr_code_token = ${qrCodeToken}
@@ -140,7 +139,6 @@ export async function POST(request: NextRequest) {
     const res = NextResponse.json({
       success: true,
       message: `Successfully ${action === 'check_in' ? 'checked in' : 'checked out'} for ${qrCode.title}`,
-      gigTitle: qrCode.title,
       action: action,
       shiftId: shiftId,
       timestamp: new Date().toISOString()
