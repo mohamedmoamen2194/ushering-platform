@@ -130,10 +130,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Add usher to scanned list
+    // Add usher to scanned list (handle NULL array)
     await sql`
       UPDATE qr_code_sessions 
-      SET scanned_by_ushers = array_append(scanned_by_ushers, ${usherId})
+      SET scanned_by_ushers = array_append(COALESCE(scanned_by_ushers, ARRAY[]::int[]), ${usherId}::int)
       WHERE id = ${qrCode.id}
     `
 
@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("QR scan error:", error)
-    return NextResponse.json({ error: "Failed to process QR scan" }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: `Failed to process QR scan: ${message}` }, { status: 500 })
   }
 } 
