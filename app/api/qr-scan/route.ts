@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
       WHERE id = ${qrCode.id}
     `
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: `Successfully ${action === 'check_in' ? 'checked in' : 'checked out'} for ${qrCode.title}`,
       gigTitle: qrCode.title,
@@ -142,6 +145,10 @@ export async function POST(request: NextRequest) {
       shiftId: shiftId,
       timestamp: new Date().toISOString()
     })
+    res.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    res.headers.set('Pragma', 'no-cache')
+    res.headers.set('Expires', '0')
+    return res
 
   } catch (error) {
     console.error("QR scan error:", error)
