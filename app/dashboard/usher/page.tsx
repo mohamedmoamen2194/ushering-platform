@@ -59,7 +59,9 @@ export default function UsherDashboard() {
     try {
       console.log("🔄 Fetching fresh applied gigs from database...")
       
-      const response = await fetch(`/api/applications/usher/${user?.id}?t=${Date.now()}`)
+      const response = await fetch(`/api/applications/usher/${user?.id}?t=${Date.now()}`,
+        { cache: 'no-store' }
+      )
       const data = await response.json()
       
       if (data.success) {
