@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,6 +65,7 @@ const countryCodes = [
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login, setUser } = useAuth()
   const { language, isRTL } = useLanguage()
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[6]) // Default to Egypt
@@ -77,6 +78,8 @@ export default function LoginPage() {
   const [showCountrySelector, setShowCountrySelector] = useState(false)
   const [showPasswordSetup, setShowPasswordSetup] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState("")
+
+  const returnTo = searchParams.get("returnTo") || ""
 
   // Close country selector when clicking outside
   useEffect(() => {
@@ -122,8 +125,13 @@ export default function LoginPage() {
         // Set user data in auth context directly since login already succeeded
         setUser(data.user)
         
-        // Redirect to dashboard based on user role
-        router.push(`/dashboard/${data.user.role}`)
+        // Redirect back if returnTo is present (e.g., /checkin?...)
+        if (returnTo && returnTo.startsWith("/")) {
+          router.push(returnTo)
+        } else {
+          // Fallback: dashboard based on user role
+          router.push(`/dashboard/${data.user.role}`)
+        }
       } else {
         // Check if the error is about missing password
         if (data.error && data.error.includes("Account not set up")) {
