@@ -10,9 +10,8 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
     }
 
     // Get query parameters for filtering
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status") // 'pending', 'approved', 'rejected', 'all'
-    const includeRejected = searchParams.get("includeRejected") === "true"
+    const status = request.nextUrl.searchParams.get("status") // 'pending', 'approved', 'rejected', 'all'
+    const includeRejected = request.nextUrl.searchParams.get("includeRejected") === "true"
 
     // Build the status filter
     let statusFilter = sql``

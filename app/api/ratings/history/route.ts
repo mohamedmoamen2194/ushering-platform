@@ -4,9 +4,8 @@ import { ratingService } from '@/lib/rating-service'
 // GET /api/ratings/history - Get rating history for an usher
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const usherId = searchParams.get('usherId')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const usherId = request.nextUrl.searchParams.get('usherId')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10')
 
     if (!usherId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })

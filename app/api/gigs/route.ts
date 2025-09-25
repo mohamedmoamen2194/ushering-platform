@@ -49,10 +49,9 @@ function toUtcFromZoned(datePart: string | null, timePart: string | null, timeZo
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const location = searchParams.get("location")
-    const role = searchParams.get("role")
-    const userId = searchParams.get("userId")
+    const location = request.nextUrl.searchParams.get("location")
+    const role = request.nextUrl.searchParams.get("role")
+    const userId = request.nextUrl.searchParams.get("userId")
 
     console.log("🔄 Fetching fresh gigs from database for userId:", userId, "role:", role)
 

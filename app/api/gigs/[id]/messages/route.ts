@@ -15,9 +15,8 @@ export async function GET(
     }
 
     // Get query parameters
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const userId = request.nextUrl.searchParams.get('userId')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50')
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })

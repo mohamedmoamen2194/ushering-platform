@@ -3,9 +3,8 @@ import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const gigId = searchParams.get('gigId')
-    const userId = searchParams.get('userId')
+    const gigId = request.nextUrl.searchParams.get('gigId')
+    const userId = request.nextUrl.searchParams.get('userId')
 
     if (!gigId || !userId) {
       return NextResponse.json({ error: 'gigId and userId are required' }, { status: 400 })

@@ -144,8 +144,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const gigId = params.id
-    const { searchParams } = new URL(request.url)
-    const brandId = searchParams.get('brandId')
+    const brandId = request.nextUrl.searchParams.get('brandId')
 
     if (!gigId || !brandId) {
       return NextResponse.json({ error: "Gig ID and Brand ID are required" }, { status: 400 })

@@ -4,10 +4,9 @@ import { notificationService } from '@/lib/notification-service'
 // GET /api/notifications - Get user notifications
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const userId = request.nextUrl.searchParams.get('userId')
+    const page = parseInt(request.nextUrl.searchParams.get('page') || '1')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20')
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })

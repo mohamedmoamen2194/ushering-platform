@@ -65,11 +65,10 @@ export async function POST(request: NextRequest) {
 // GET /api/ratings - Get rating information
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const gigId = searchParams.get('gigId')
-    const usherId = searchParams.get('usherId')
-    const topRated = searchParams.get('topRated')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const gigId = request.nextUrl.searchParams.get('gigId')
+    const usherId = request.nextUrl.searchParams.get('usherId')
+    const topRated = request.nextUrl.searchParams.get('topRated')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10')
 
     if (topRated === 'true') {
       // Get top-rated ushers
