@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GigCard } from "@/components/gig-card"
+import { GigChat } from "@/components/gig-chat"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { QRScanner } from "@/components/qr-scanner"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
-import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock, QrCode, RefreshCw } from 'lucide-react'
+import { Search, Filter, DollarSign, Calendar, Star, LogOut, Bell, Clock, QrCode, RefreshCw, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { ProtectedRoute } from "@/components/protected-route"
 import Link from "next/link"
@@ -31,6 +32,8 @@ export default function UsherDashboard() {
   const [statsLoading, setStatsLoading] = useState(false)
   const { t } = useTranslation(language)
   const [appliedGigs, setAppliedGigs] = useState([])
+  const [selectedChatGig, setSelectedChatGig] = useState<any>(null)
+  const [showChatSection, setShowChatSection] = useState(true)
 
   const fetchGigs = async () => {
     try {
@@ -129,7 +132,7 @@ export default function UsherDashboard() {
 
     const intervalId = setInterval(() => {
       fetchAppliedGigs()
-    }, 30000) // refresh every 30s
+    }, 60000) // refresh every 1 minute
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -182,6 +185,21 @@ export default function UsherDashboard() {
   const handleLogout = () => {
     logout()
     router.push("/")
+  }
+
+  // Get approved gigs for chat (filter out any invalid gigs)
+  const getApprovedGigsForChat = () => {
+    const approvedGigs = appliedGigs.filter((gig: any) => {
+      const title = gig.title || gig.gig_title
+      const companyName = gig.company_name
+      
+      // Only include approved gigs that have valid data
+      return gig.status === 'approved' && 
+             gig.id && 
+             title && 
+             companyName
+    })
+    return approvedGigs
   }
 
   const formatDate = (dateString: string) => {
@@ -285,6 +303,108 @@ export default function UsherDashboard() {
             </CardContent>
           </Card>
         </div>
+
+
+        {/* Chat Section for Approved Gigs */}
+        {getApprovedGigsForChat().length > 0 && (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-blue-600" />
+                    <CardTitle>
+                      {language === "ar" ? "محادثات الوظائف" : "Gig Chats"}
+                    </CardTitle>
+                    <Badge variant="outline">
+                      {getApprovedGigsForChat().length}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowChatSection(!showChatSection)}
+                  >
+                    {showChatSection ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              {showChatSection && (
+                <CardContent>
+                  {!selectedChatGig ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm text-gray-600">
+                          {language === "ar" 
+                            ? "اختر وظيفة للدردشة مع فريق العمل"
+                            : "Select a gig to chat with the team"
+                          }
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            fetchAppliedGigs()
+                            setSelectedChatGig(null)
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {language === "ar" ? "تحديث" : "Refresh"}
+                        </Button>
+                      </div>
+                      <div className="grid gap-3">
+                        {getApprovedGigsForChat().map((gig: any) => (
+                          <div
+                            key={gig.id}
+                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setSelectedChatGig(gig)}
+                          >
+                            <div className="flex-1">
+                              <h4 className="font-medium">{gig.title || gig.gig_title}</h4>
+                              <p className="text-sm text-gray-600">{gig.company_name}</p>
+                              <p className="text-xs text-gray-500">{gig.location || gig.gig_location}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-green-100 text-green-800">
+                                {language === "ar" ? "مقبول" : "Approved"}
+                              </Badge>
+                              <MessageCircle className="h-4 w-4 text-blue-600" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-medium">{selectedChatGig.title || selectedChatGig.gig_title}</h4>
+                          <p className="text-sm text-gray-600">{selectedChatGig.company_name}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedChatGig(null)}
+                        >
+                          {language === "ar" ? "العودة" : "Back"}
+                        </Button>
+                      </div>
+                      
+                      <div className="border rounded-lg overflow-hidden">
+                        <GigChat
+                          gigId={selectedChatGig.id}
+                          gigTitle={selectedChatGig.title || selectedChatGig.gig_title}
+                          userAccess="usher"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+          </div>
+        )}
 
         <div className="flex justify-end mb-4">
           <Button 

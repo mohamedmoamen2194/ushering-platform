@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { UsherHistory } from "@/components/usher-history"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
@@ -24,6 +26,9 @@ import {
   RefreshCw,
   Phone,
   Mail,
+  History,
+  Eye,
+  Clock,
 } from "lucide-react"
 import Link from "next/link"
 import { ProtectedRoute } from "@/components/protected-route"
@@ -38,6 +43,7 @@ interface Application {
   gig_title: string
   gig_location: string
   gig_datetime: string
+  gig_duration_hours: number
   usher_name: string
   usher_phone: string
   usher_email: string
@@ -45,6 +51,7 @@ interface Application {
   usher_experience_years: number
   usher_skills: string[]
   usher_vcash_number: string
+  usher_profile_photo_url?: string
 }
 
 export default function ApplicationsPage() {
@@ -122,29 +129,57 @@ export default function ApplicationsPage() {
     })
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status: string, gigDateTime?: string, durationHours?: number) => {
+    // Check if gig is old (end date has passed)
+    let isOldGig = false
+    if (gigDateTime && durationHours) {
+      const startDate = new Date(gigDateTime)
+      const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
+      const now = new Date()
+      isOldGig = endDate < now
+    }
+
+    // Override status if gig is old
+    const effectiveStatus = isOldGig ? 'old' : status
+
+    switch (effectiveStatus) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
       case "approved":
         return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
       case "rejected":
         return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+      case "old":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
     }
   }
 
-  const getStatusText = (status: string) => {
-    switch (status) {
+  const getStatusText = (status: string, gigDateTime?: string, durationHours?: number) => {
+    // Check if gig is old (end date has passed)
+    let isOldGig = false
+    if (gigDateTime && durationHours) {
+      const startDate = new Date(gigDateTime)
+      const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
+      const now = new Date()
+      isOldGig = endDate < now
+    }
+
+    // Override status if gig is old
+    const effectiveStatus = isOldGig ? 'old' : status
+
+    switch (effectiveStatus) {
       case "pending":
         return language === "ar" ? "معلق" : "Pending"
       case "approved":
         return language === "ar" ? "مقبول" : "Approved"
       case "rejected":
         return language === "ar" ? "مرفوض" : "Rejected"
+      case "old":
+        return language === "ar" ? "وظيفة قديمة" : "Old Gig"
       default:
-        return status
+        return effectiveStatus
     }
   }
 
@@ -179,8 +214,8 @@ export default function ApplicationsPage() {
         {/* Header */}
         <header className="bg-card shadow-sm border-b border-border">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
                 <Link href="/dashboard/brand">
                   <Button variant="ghost" size="sm">
                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -188,36 +223,41 @@ export default function ApplicationsPage() {
                   </Button>
                 </Link>
                 <div>
-                  <h1 className="text-xl font-bold text-card-foreground">
+                  <h1 className="text-lg sm:text-xl font-bold text-card-foreground">
                     {language === "ar" ? "إدارة الطلبات" : "Manage Applications"}
                   </h1>
-                  
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <Button variant="ghost" size="sm">
                   <Bell className="h-4 w-4" />
                 </Button>
-                <LanguageSwitcher />
+                <div className="hidden sm:block">
+                  <LanguageSwitcher />
+                </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
-                  {language === "ar" ? "خروج" : "Logout"}
+                  <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Logout"}</span>
                 </Button>
               </div>
+            </div>
+            {/* Mobile Language Switcher */}
+            <div className="block sm:hidden mt-2">
+              <LanguageSwitcher />
             </div>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-4 sm:py-8">
           {/* Filters */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-card-foreground">{language === "ar" ? "فلتر:" : "Filter:"}</span>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40 bg-background border-border text-foreground">
+                <SelectTrigger className="w-full sm:w-40 bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -229,7 +269,7 @@ export default function ApplicationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchApplications} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={fetchApplications} disabled={loading} className="w-full sm:w-auto">
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               {language === "ar" ? "تحديث" : "Refresh"}
             </Button>
@@ -262,31 +302,31 @@ export default function ApplicationsPage() {
           ) : (
             <div className="space-y-6">
               {/* Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card className="bg-card border-border">
                   <CardContent className="p-4">
-                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    <div className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                       {applications.filter((app) => app.status === "pending").length}
                     </div>
-                    <p className="text-sm text-muted-foreground">{language === "ar" ? "طلبات معلقة" : "Pending Applications"}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{language === "ar" ? "طلبات معلقة" : "Pending Applications"}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-card border-border">
                   <CardContent className="p-4">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                       {applications.filter((app) => app.status === "approved").length}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {language === "ar" ? "طلبات مقبولة" : "Approved Applications"}
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-card border-border">
+                <Card className="bg-card border-border sm:col-span-2 lg:col-span-1">
                   <CardContent className="p-4">
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    <div className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
                       {applications.filter((app) => app.status === "rejected").length}
                     </div>
-                    <p className="text-sm text-muted-foreground">{language === "ar" ? "طلبات مرفوضة" : "Rejected Applications"}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{language === "ar" ? "طلبات مرفوضة" : "Rejected Applications"}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -296,37 +336,83 @@ export default function ApplicationsPage() {
                 {applications.map((application) => (
                   <Card key={application.id} className="bg-card border-border">
                     <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg text-card-foreground">{application.gig_title}</CardTitle>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-base sm:text-lg text-card-foreground break-words">{application.gig_title}</CardTitle>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-2">
                             <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {application.gig_location}
+                              <MapPin className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">{application.gig_location}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {formatDate(application.gig_datetime)}
+                              <Calendar className="h-4 w-4 flex-shrink-0" />
+                              <span>{formatDate(application.gig_datetime)}</span>
                             </div>
                           </div>
                         </div>
-                        <Badge className={getStatusColor(application.status)}>{getStatusText(application.status)}</Badge>
+                        <div className="flex-shrink-0">
+                          <Badge className={getStatusColor(application.status, application.gig_datetime, application.gig_duration_hours)}>
+                            {/* Add clock icon for old gigs */}
+                            {(() => {
+                              const startDate = new Date(application.gig_datetime)
+                              const endDate = new Date(startDate.getTime() + (application.gig_duration_hours * 60 * 60 * 1000))
+                              const isOldGig = endDate < new Date()
+                              return isOldGig ? (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="hidden sm:inline">{getStatusText(application.status, application.gig_datetime, application.gig_duration_hours)}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs sm:text-sm">{getStatusText(application.status, application.gig_datetime, application.gig_duration_hours)}</span>
+                              )
+                            })()}
+                          </Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                            <User className="h-6 w-6 text-primary" />
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4 w-full">
+                          <div className="relative flex-shrink-0">
+                            {application.usher_profile_photo_url ? (
+                              <img
+                                src={application.usher_profile_photo_url}
+                                alt={application.usher_name}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary/20"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                                <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                              </div>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-card-foreground">{application.usher_name}</h4>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                              <h4 className="font-medium text-card-foreground truncate">{application.usher_name}</h4>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                                    <History className="h-4 w-4 mr-2" />
+                                    <span className="hidden sm:inline">{language === "ar" ? "عرض التاريخ" : "View History"}</span>
+                                    <span className="sm:hidden">{language === "ar" ? "التاريخ" : "History"}</span>
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-sm sm:text-base">
+                                      {language === "ar" ? `تاريخ عمل ${application.usher_name}` : `${application.usher_name}'s Work History`}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <UsherHistory usherId={application.usher_id} showInModal={true} />
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-2">
                               <div className="flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                {application.usher_rating > 0 ? application.usher_rating.toFixed(1) : "0.0"}
+                                <span>{application.usher_rating > 0 ? application.usher_rating.toFixed(1) : "0.0"}</span>
                               </div>
-                              <span>
+                              <span className="text-xs sm:text-sm">
                                 {application.usher_experience_years}{" "}
                                 {language === "ar" ? "سنوات خبرة" : "years experience"}
                               </span>
@@ -363,23 +449,28 @@ export default function ApplicationsPage() {
 
                             {application.usher_skills && application.usher_skills.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
-                                {application.usher_skills.map((skill, index) => (
+                                {application.usher_skills.slice(0, 3).map((skill, index) => (
                                   <Badge key={index} variant="outline" className="text-xs border-border text-muted-foreground">
                                     {skill}
                                   </Badge>
                                 ))}
+                                {application.usher_skills.length > 3 && (
+                                  <Badge variant="outline" className="text-xs border-border text-muted-foreground">
+                                    +{application.usher_skills.length - 3}
+                                  </Badge>
+                                )}
                               </div>
                             )}
                           </div>
                         </div>
 
                         {application.status === "pending" && (
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleApplicationAction(application.id, "rejected")}
-                              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+                              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 w-full sm:w-auto"
                             >
                               <X className="h-4 w-4 mr-1" />
                               {language === "ar" ? "رفض" : "Reject"}
@@ -387,7 +478,7 @@ export default function ApplicationsPage() {
                             <Button
                               size="sm"
                               onClick={() => handleApplicationAction(application.id, "approved")}
-                              className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                              className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 w-full sm:w-auto"
                             >
                               <Check className="h-4 w-4 mr-1" />
                               {language === "ar" ? "قبول" : "Approve"}
@@ -397,7 +488,7 @@ export default function ApplicationsPage() {
                       </div>
 
                       <div className="mt-4 text-xs text-muted-foreground">
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row justify-between gap-1">
                           <span>
                             {language === "ar" ? "تاريخ التقديم:" : "Applied on:"} {formatDate(application.applied_at)}
                           </span>

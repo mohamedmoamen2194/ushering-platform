@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { notificationService, NotificationHelpers } from "@/lib/notification-service"
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,11 +124,16 @@ export async function POST(request: NextRequest) {
       console.log("Created new application:", result[0])
     }
 
-    // Create notification for brand
-    await sql`
-      INSERT INTO notifications (user_id, title, message, type)
-      VALUES (${gig.brand_id}, 'New Application', ${"You have a new application for " + gig.title}, 'application')
+    // Get usher name for notification
+    const usherResult = await sql`
+      SELECT name FROM users WHERE id = ${usherId}
     `
+    const usherName = usherResult[0]?.name || 'An usher'
+
+    // Send enhanced notification to brand
+    await notificationService.sendNotification(
+      NotificationHelpers.newApplication(gig.brand_id, gig.title, usherName)
+    )
 
     return NextResponse.json({
       success: true,
@@ -155,7 +161,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Application not found" }, { status: 404 })
     }
 
-    // Create notification for usher
+    // Send enhanced notification to usher
     const appData = await sql`
       SELECT a.usher_id, g.title 
       FROM applications a
@@ -165,13 +171,9 @@ export async function PATCH(request: NextRequest) {
 
     if (appData.length > 0) {
       const app = appData[0]
-      const notificationMessage = `Your application for ${app.title} has been ${status}`
-      const notificationTitle = `Application ${status}`
-
-      await sql`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (${app.usher_id}, ${notificationTitle}, ${notificationMessage}, 'gig_alert')
-      `
+      await notificationService.sendNotification(
+        NotificationHelpers.applicationStatusChange(app.usher_id, app.title, status)
+      )
     }
 
     return NextResponse.json({

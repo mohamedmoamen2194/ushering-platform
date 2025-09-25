@@ -8,7 +8,8 @@
     "lint": "next lint",
     "start": "next start",
     "migrate:password": "node scripts/run-migration.js",
-    "setup:passwords": "node scripts/set-default-passwords.js"
+    "setup:passwords": "node scripts/set-default-passwords.js",
+    "migrate:enhancements": "node scripts/run-enhancement-migration.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -16,7 +16,7 @@ import { QRCodeDisplay } from "@/components/qr-code-display"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
-import { Plus, DollarSign, Users, Calendar, LogOut, Bell, FileText, MapPin, Clock, Wallet, Briefcase, UserCheck, QrCode, Star, RefreshCw } from "lucide-react"
+import { Plus, DollarSign, Users, Calendar, LogOut, Bell, FileText, MapPin, Clock, Wallet, Briefcase, UserCheck, QrCode, Star, RefreshCw, MessageCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import Link from "next/link"
 import { ProtectedRoute } from "@/components/protected-route"
@@ -769,6 +769,14 @@ export default function BrandDashboard() {
                             {language === "ar" ? "عرض الطلبات" : "View Applications"}
                           </Button>
                         </Link>
+                        {gig.approved_ushers > 0 && (
+                          <Link href={`/gig-chat/${gig.id}`}>
+                            <Button variant="outline" size="sm">
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              {language === "ar" ? "محادثة الوظيفة" : "Gig Chat"}
+                            </Button>
+                          </Link>
+                        )}
                         {gig.status === 'active' && (
                           <Link href={`/dashboard/brand/rate-ushers?gigId=${gig.id}`}>
                             <Button variant="outline" size="sm">

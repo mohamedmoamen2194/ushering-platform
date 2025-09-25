@@ -35,13 +35,15 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
         g.title as gig_title,
         g.location as gig_location,
         g.start_datetime as gig_datetime,
+        g.duration_hours as gig_duration_hours,
         u.name as usher_name,
         u.phone as usher_phone,
         u.email as usher_email,
         ush.rating as usher_rating,
         ush.experience_years as usher_experience_years,
         ush.skills as usher_skills,
-        ush.vcash_number as usher_vcash_number
+        ush.vcash_number as usher_vcash_number,
+        ush.profile_photo_url as usher_profile_photo_url
       FROM applications a
       JOIN gigs g ON a.gig_id = g.id
       JOIN users u ON a.usher_id = u.id

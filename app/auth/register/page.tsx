@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import { Phone, ArrowRight, Upload, Building, User, AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { RegistrationPhotoUpload } from "@/components/registration-photo-upload"
 import Link from "next/link"
 
 export default function RegisterPage() {
@@ -28,6 +29,8 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [uploadedFile, setUploadedFile] = useState<string | null>(null)
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null)
   const [passwordStrength, setPasswordStrength] = useState<{ score: number; feedback: string[]; isStrong: boolean }>({ score: 0, feedback: [], isStrong: false })
   const { t } = useTranslation(language)
 
@@ -143,6 +146,39 @@ export default function RegisterPage() {
 
       if (success) {
         setSuccess(language === "ar" ? "تم إنشاء الحساب بنجاح!" : "Account created successfully!")
+        
+        // Upload profile photo if selected (for ushers)
+        if (role === "usher" && profilePhotoFile) {
+          try {
+            console.log("Uploading profile photo...")
+            // Wait a moment for the user to be set in context
+            await new Promise(resolve => setTimeout(resolve, 100))
+            
+            const photoFormData = new FormData()
+            photoFormData.append('photo', profilePhotoFile)
+            // Get user from localStorage since register function sets it there
+            const storedUser = localStorage.getItem("aura_user")
+            const userId = storedUser ? JSON.parse(storedUser).id : '0'
+            photoFormData.append('userId', userId.toString())
+            photoFormData.append('userRole', 'usher')
+
+            const photoResponse = await fetch('/api/upload/photo', {
+              method: 'POST',
+              body: photoFormData,
+            })
+
+            const photoResult = await photoResponse.json()
+            if (photoResult.success) {
+              console.log("Profile photo uploaded successfully:", photoResult.photoUrl)
+            } else {
+              console.warn("Failed to upload profile photo:", photoResult.error)
+            }
+          } catch (photoError) {
+            console.error("Error uploading profile photo:", photoError)
+            // Don't fail registration if photo upload fails
+          }
+        }
+        
         // Small delay to show success message
         setTimeout(() => {
           router.push(`/dashboard/${role}`)
@@ -454,6 +490,31 @@ export default function RegisterPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Profile Photo Upload */}
+                  <div className="space-y-2">
+                    <Label>{language === "ar" ? "الصورة الشخصية" : "Profile Photo"}</Label>
+                    <div className="flex justify-center">
+                      <RegistrationPhotoUpload
+                        onPhotoSelected={(file: File, previewUrl: string) => {
+                          setProfilePhotoFile(file)
+                          setProfilePhotoUrl(previewUrl)
+                        }}
+                        onPhotoRemoved={() => {
+                          setProfilePhotoFile(null)
+                          setProfilePhotoUrl(null)
+                        }}
+                        disabled={isLoading}
+                        size="lg"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      {language === "ar" 
+                        ? "ستساعد صورتك الشخصية العلامات التجارية على التعرف عليك"
+                        : "Your profile photo helps brands recognize you"
+                      }
+                    </p>
                   </div>
 
                   <div className="space-y-2">
