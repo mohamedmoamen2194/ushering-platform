@@ -123,7 +123,8 @@ export async function POST(request: NextRequest) {
               hours_worked = ${Math.min(hoursWorked, qrCode.duration_hours)},
               payout_amount = ${Math.min(hoursWorked, qrCode.duration_hours) * qrCode.pay_rate},
               check_out_verified = true, 
-              attendance_status = 'checked_out'
+              attendance_status = 'checked_out',
+              payout_status = 'pending'
           WHERE id = ${shiftId}
         `
       }
@@ -135,6 +136,33 @@ export async function POST(request: NextRequest) {
       SET scanned_by_ushers = array_append(COALESCE(scanned_by_ushers, ARRAY[]::int[]), ${usherId}::int)
       WHERE id = ${qrCode.id}
     `
+
+    // Record daily attendance for rating calculations
+    if (action === 'check_in') {
+      await sql`
+        INSERT INTO daily_attendance (gig_id, usher_id, attendance_date, check_in_time, is_present)
+        VALUES (${qrCode.gig_id}, ${usherId}, CURRENT_DATE, NOW(), true)
+        ON CONFLICT (gig_id, usher_id, attendance_date) 
+        DO UPDATE SET check_in_time = NOW(), is_present = true
+      `
+    } else if (action === 'check_out') {
+      const checkInTime = await sql`
+        SELECT check_in_time FROM shifts WHERE id = ${shiftId}
+      `
+      
+      const hoursWorked = checkInTime[0]?.check_in_time 
+        ? (Date.now() - new Date(checkInTime[0].check_in_time).getTime()) / (1000 * 60 * 60)
+        : qrCode.duration_hours
+
+      await sql`
+        UPDATE daily_attendance 
+        SET check_out_time = NOW(), 
+            hours_worked = ${Math.min(hoursWorked, qrCode.duration_hours)}
+        WHERE gig_id = ${qrCode.gig_id} 
+        AND usher_id = ${usherId} 
+        AND attendance_date = CURRENT_DATE
+      `
+    }
 
     const res = NextResponse.json({
       success: true,

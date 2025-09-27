@@ -778,12 +778,39 @@ export default function BrandDashboard() {
                           </Link>
                         )}
                         {gig.status === 'active' && (
-                          <Link href={`/dashboard/brand/rate-ushers?gigId=${gig.id}`}>
-                            <Button variant="outline" size="sm">
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`/api/gigs/${gig.id}/complete`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ brandId: user?.id })
+                                  })
+                                  const data = await response.json()
+                                  if (data.success) {
+                                    alert(language === "ar" ? "تم إكمال الوظيفة بنجاح" : "Gig completed successfully")
+                                    fetchGigs() // Refresh the gigs list
+                                  } else {
+                                    alert(data.error || "Failed to complete gig")
+                                  }
+                                } catch (error) {
+                                  alert("Error completing gig")
+                                }
+                              }}
+                            >
                               <Star className="h-4 w-4 mr-2" />
-                              {language === "ar" ? "تقييم المضيفين" : "Rate Ushers"}
+                              {language === "ar" ? "إكمال الوظيفة" : "Complete Gig"}
                             </Button>
-                          </Link>
+                            <Link href={`/dashboard/brand/rate-ushers?gigId=${gig.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Star className="h-4 w-4 mr-2" />
+                                {language === "ar" ? "تقييم المضيفين" : "Rate Ushers"}
+                              </Button>
+                            </Link>
+                          </>
                         )}
                       </div>
                     </CardContent>

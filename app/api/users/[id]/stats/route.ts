@@ -26,11 +26,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         SELECT 
           COALESCE(u.rating, 0) as rating,
           COALESCE(u.total_gigs_completed, 0) as total_gigs_completed,
-          COALESCE(SUM(CASE WHEN s.payout_status = 'completed' THEN s.payout_amount ELSE 0 END), 0) as total_earnings,
-          COUNT(CASE WHEN s.payout_status = 'completed' THEN 1 END) as actual_completed_gigs
+          COALESCE(SUM(CASE 
+            WHEN s.payout_status = 'completed' THEN s.payout_amount 
+            WHEN s.payout_status = 'pending' AND s.check_out_verified = true THEN s.payout_amount
+            ELSE 0 
+          END), 0) as total_earnings,
+          COUNT(CASE 
+            WHEN s.payout_status = 'completed' THEN 1
+            WHEN s.payout_status = 'pending' AND s.check_out_verified = true THEN 1
+            WHEN s.check_out_verified = true THEN 1
+          END) as actual_completed_gigs,
+          COUNT(CASE WHEN s.check_in_verified = true THEN 1 END) as total_attended_gigs
         FROM users usr
         LEFT JOIN ushers u ON usr.id = u.user_id
-        LEFT JOIN shifts s ON usr.id = s.usher_id AND s.payout_status = 'completed'
+        LEFT JOIN shifts s ON usr.id = s.usher_id
         WHERE usr.id = ${userId}
         GROUP BY usr.id, u.rating, u.total_gigs_completed
       `
@@ -62,7 +71,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         SELECT 
           COALESCE(b.wallet_balance, 0) as wallet_balance,
           COUNT(DISTINCT g.id) as total_gigs_created,
-          COUNT(DISTINCT CASE WHEN g.status = 'active' THEN g.id END) as active_gigs,
+          COUNT(DISTINCT CASE 
+            WHEN g.status = 'active' OR (
+              g.start_datetime IS NOT NULL AND 
+              g.duration_hours IS NOT NULL AND
+              (g.start_datetime + INTERVAL '1 hour' * g.duration_hours) > NOW()
+            ) THEN g.id 
+          END) as active_gigs,
           COUNT(DISTINCT a.usher_id) as total_ushers_hired
         FROM users usr
         LEFT JOIN brands b ON usr.id = b.user_id

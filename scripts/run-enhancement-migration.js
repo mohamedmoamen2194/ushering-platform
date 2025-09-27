@@ -218,6 +218,20 @@ async function runEnhancementMigration() {
         } else throw error;
       }
 
+      // 9. Add payout status to shifts table
+      console.log('💰 Adding payout status tracking...');
+      try {
+        await sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS payout_status VARCHAR(20) DEFAULT 'pending' CHECK (payout_status IN ('pending', 'completed', 'cancelled'))`;
+        await sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`;
+        console.log('✅ Added payout status tracking');
+        successCount += 2;
+      } catch (error) {
+        if (error.message.includes('already exists')) {
+          console.log('⚠️ Payout status fields already exist');
+          skipCount += 2;
+        } else throw error;
+      }
+
       console.log('🎯 Creating indexes...');
       // Create indexes (these are safe to run multiple times)
       const indexes = [

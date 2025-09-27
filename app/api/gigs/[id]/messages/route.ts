@@ -148,8 +148,9 @@ export async function POST(
         g.title as gig_title,
         u.name as sender_name,
         u.role as sender_role
-      FROM gigs g, users u
-      WHERE g.id = ${gigId} AND u.id = ${parseInt(senderId)}
+      FROM gigs g
+      JOIN users u ON u.id = ${parseInt(senderId)}
+      WHERE g.id = ${gigId}
     `
 
     if (accessCheck.length === 0) {
