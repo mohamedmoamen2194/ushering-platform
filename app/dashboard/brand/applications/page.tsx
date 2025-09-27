@@ -52,7 +52,7 @@ interface Application {
   usher_experience_years: number
   usher_skills: string[]
   usher_vcash_number: string
-  usher_profile_photo_url?: string
+  usher_profile_photo_url?: string | null
 }
 
 export default function ApplicationsPage() {
@@ -102,9 +102,9 @@ export default function ApplicationsPage() {
         // Ensure all applications have required fields with defaults
         const processedApplications = (data.applications || []).map((app: any) => ({
           ...app,
-          gig_duration_hours: app.gig_duration_hours || 8,
-          usher_rating: app.usher_rating || 0,
-          usher_experience_years: app.usher_experience_years || 0,
+          gig_duration_hours: parseInt(app.gig_duration_hours) || 8,
+          usher_rating: parseFloat(app.usher_rating) || 0,
+          usher_experience_years: parseInt(app.usher_experience_years) || 0,
           usher_skills: Array.isArray(app.usher_skills) ? app.usher_skills : [],
           usher_vcash_number: app.usher_vcash_number || '',
           usher_profile_photo_url: app.usher_profile_photo_url || null
@@ -460,7 +460,7 @@ export default function ApplicationsPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-2">
                               <div className="flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span>{application.usher_rating > 0 ? application.usher_rating.toFixed(1) : "0.0"}</span>
+                                <span>{application.usher_rating > 0 ? parseFloat(application.usher_rating).toFixed(1) : "0.0"}</span>
                               </div>
                               <span className="text-xs sm:text-sm">
                                 {application.usher_experience_years}{" "}
