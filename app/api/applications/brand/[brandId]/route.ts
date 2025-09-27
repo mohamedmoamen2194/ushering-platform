@@ -23,40 +23,118 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
     }
 
     // Get all applications for gigs created by this brand with contact info
-    const result = await sql`
-      SELECT 
-        a.id,
-        a.gig_id,
-        a.usher_id,
-        a.status,
-        a.applied_at,
-        a.reviewed_at,
-        g.title as gig_title,
-        g.location as gig_location,
-        COALESCE(g.start_datetime, g.datetime) as gig_datetime,
-        COALESCE(g.duration_hours, 8) as gig_duration_hours,
-        u.name as usher_name,
-        u.phone as usher_phone,
-        u.email as usher_email,
-        COALESCE(ush.rating, 0) as usher_rating,
-        COALESCE(ush.experience_years, 0) as usher_experience_years,
-        COALESCE(ush.skills, '{}') as usher_skills,
-        COALESCE(ush.vcash_number, '') as usher_vcash_number,
-        ush.profile_photo_url as usher_profile_photo_url
-      FROM applications a
-      JOIN gigs g ON a.gig_id = g.id
-      JOIN users u ON a.usher_id = u.id
-      LEFT JOIN ushers ush ON u.id = ush.user_id
-      WHERE g.brand_id = ${brandId}
-      ${statusFilter}
-      ORDER BY 
-        CASE a.status 
-          WHEN 'pending' THEN 1 
-          WHEN 'approved' THEN 2 
-          WHEN 'rejected' THEN 3 
-        END,
-        a.applied_at DESC
-    `
+    // Use try-catch to handle different database schemas gracefully
+    let result
+    try {
+      // Try with new schema (start_datetime, duration_hours)
+      result = await sql`
+        SELECT 
+          a.id,
+          a.gig_id,
+          a.usher_id,
+          a.status,
+          a.applied_at,
+          a.reviewed_at,
+          g.title as gig_title,
+          g.location as gig_location,
+          g.start_datetime as gig_datetime,
+          g.duration_hours as gig_duration_hours,
+          u.name as usher_name,
+          u.phone as usher_phone,
+          u.email as usher_email,
+          COALESCE(ush.rating, 0) as usher_rating,
+          COALESCE(ush.experience_years, 0) as usher_experience_years,
+          COALESCE(ush.skills, '{}') as usher_skills,
+          COALESCE(ush.vcash_number, '') as usher_vcash_number,
+          ush.profile_photo_url as usher_profile_photo_url
+        FROM applications a
+        JOIN gigs g ON a.gig_id = g.id
+        JOIN users u ON a.usher_id = u.id
+        LEFT JOIN ushers ush ON u.id = ush.user_id
+        WHERE g.brand_id = ${brandId}
+        ${statusFilter}
+        ORDER BY 
+          CASE a.status 
+            WHEN 'pending' THEN 1 
+            WHEN 'approved' THEN 2 
+            WHEN 'rejected' THEN 3 
+          END,
+          a.applied_at DESC
+      `
+    } catch (error) {
+      // Fallback to old schema (datetime, duration_hours)
+      try {
+        result = await sql`
+          SELECT 
+            a.id,
+            a.gig_id,
+            a.usher_id,
+            a.status,
+            a.applied_at,
+            a.reviewed_at,
+            g.title as gig_title,
+            g.location as gig_location,
+            g.datetime as gig_datetime,
+            g.duration_hours as gig_duration_hours,
+            u.name as usher_name,
+            u.phone as usher_phone,
+            u.email as usher_email,
+            COALESCE(ush.rating, 0) as usher_rating,
+            COALESCE(ush.experience_years, 0) as usher_experience_years,
+            COALESCE(ush.skills, '{}') as usher_skills,
+            COALESCE(ush.vcash_number, '') as usher_vcash_number,
+            ush.profile_photo_url as usher_profile_photo_url
+          FROM applications a
+          JOIN gigs g ON a.gig_id = g.id
+          JOIN users u ON a.usher_id = u.id
+          LEFT JOIN ushers ush ON u.id = ush.user_id
+          WHERE g.brand_id = ${brandId}
+          ${statusFilter}
+          ORDER BY 
+            CASE a.status 
+              WHEN 'pending' THEN 1 
+              WHEN 'approved' THEN 2 
+              WHEN 'rejected' THEN 3 
+            END,
+            a.applied_at DESC
+        `
+      } catch (error2) {
+        // Final fallback - minimal columns that should always exist
+        result = await sql`
+          SELECT 
+            a.id,
+            a.gig_id,
+            a.usher_id,
+            a.status,
+            a.applied_at,
+            a.reviewed_at,
+            g.title as gig_title,
+            g.location as gig_location,
+            g.created_at as gig_datetime,
+            8 as gig_duration_hours,
+            u.name as usher_name,
+            u.phone as usher_phone,
+            u.email as usher_email,
+            0 as usher_rating,
+            0 as usher_experience_years,
+            '{}' as usher_skills,
+            '' as usher_vcash_number,
+            null as usher_profile_photo_url
+          FROM applications a
+          JOIN gigs g ON a.gig_id = g.id
+          JOIN users u ON a.usher_id = u.id
+          WHERE g.brand_id = ${brandId}
+          ${statusFilter}
+          ORDER BY 
+            CASE a.status 
+              WHEN 'pending' THEN 1 
+              WHEN 'approved' THEN 2 
+              WHEN 'rejected' THEN 3 
+            END,
+            a.applied_at DESC
+        `
+      }
+    }
 
     return NextResponse.json({
       success: true,
