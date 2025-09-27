@@ -34,8 +34,7 @@ export async function POST(
     // Mark all shifts for this gig as completed if they have both check-in and check-out
     const completedShifts = await sql`
       UPDATE shifts 
-      SET payout_status = 'completed',
-          updated_at = NOW()
+      SET payout_status = 'completed'
       WHERE gig_id = ${gigId} 
       AND check_in_verified = true 
       AND check_out_verified = true
@@ -46,8 +45,7 @@ export async function POST(
     // Update gig status to completed
     await sql`
       UPDATE gigs 
-      SET status = 'completed',
-          updated_at = NOW()
+      SET status = 'completed'
       WHERE id = ${gigId}
     `
 
@@ -76,8 +74,7 @@ export async function POST(
         DO UPDATE SET 
           attendance_days = ${attendance.days_attended},
           total_gig_days = ${attendance.total_days},
-          attendance_rating = ${attendance.attendance_rating},
-          updated_at = NOW()
+          attendance_rating = ${attendance.attendance_rating}
       `
     }
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db'
-import { notificationService, NotificationHelpers } from '@/lib/notification-service'
 
 // GET - Fetch messages for a specific gig
 export async function GET(
@@ -188,7 +187,7 @@ export async function POST(
       AND u.is_active = true
     `
 
-    // Send enhanced notifications to recipients
+    // Create in-app notifications for recipients (no WhatsApp)
     if (recipients.length > 0) {
       // Get gig title for better notification context
       const gigResult = await sql`
@@ -197,20 +196,27 @@ export async function POST(
       const gigTitle = gigResult[0]?.title || 'Gig'
 
       for (const recipient of recipients) {
-        if (effectiveIsAnnouncement) {
-          await notificationService.sendNotification(
-            NotificationHelpers.gigAnnouncement(recipient.id, gigTitle, message)
+        const notificationTitle = effectiveIsAnnouncement 
+          ? `📢 Announcement: ${gigTitle}`
+          : `💬 New Message: ${gigTitle}`
+        
+        const notificationMessage = effectiveIsAnnouncement
+          ? `Announcement: ${message}`
+          : `${access.sender_name}: ${message}`
+
+        // Store notification in database only (no WhatsApp sending)
+        await sql`
+          INSERT INTO notifications (user_id, title, message, type, reference_id, priority, status)
+          VALUES (
+            ${recipient.id}, 
+            ${notificationTitle}, 
+            ${notificationMessage}, 
+            ${effectiveIsAnnouncement ? 'gig_announcement' : 'gig_message'}, 
+            ${gigId.toString()}, 
+            'medium',
+            'delivered'
           )
-        } else {
-          await notificationService.sendNotification({
-            userId: recipient.id,
-            title: `New Message: ${gigTitle}`,
-            message: `${access.sender_name}: ${message}`,
-            type: 'gig_message',
-            referenceId: gigId.toString(),
-            priority: 'medium'
-          })
-        }
+        `
       }
     }
 
