@@ -65,7 +65,7 @@ export async function POST(
       GROUP BY da.usher_id, g.total_days
     `
 
-    // Update attendance ratings in gig_ratings table
+    // Update attendance ratings in gig_ratings table and trigger overall rating updates
     for (const attendance of attendanceData) {
       await sql`
         INSERT INTO gig_ratings (gig_id, usher_id, attendance_days, total_gig_days, attendance_rating)
@@ -76,6 +76,16 @@ export async function POST(
           total_gig_days = ${attendance.total_days},
           attendance_rating = ${attendance.attendance_rating}
       `
+
+      // Update usher's overall rating
+      try {
+        await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/users/${attendance.usher_id}/update-rating`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      } catch (error) {
+        console.log(`Rating update failed for usher ${attendance.usher_id} (non-critical):`, error)
+      }
     }
 
     return NextResponse.json({

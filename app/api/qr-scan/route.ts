@@ -162,6 +162,16 @@ export async function POST(request: NextRequest) {
         AND usher_id = ${usherId} 
         AND attendance_date = CURRENT_DATE
       `
+
+      // Update usher's overall rating after check-out
+      try {
+        await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/users/${usherId}/update-rating`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      } catch (error) {
+        console.log('Rating update failed (non-critical):', error)
+      }
     }
 
     const res = NextResponse.json({
