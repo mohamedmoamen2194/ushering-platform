@@ -33,15 +33,15 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
         a.reviewed_at,
         g.title as gig_title,
         g.location as gig_location,
-        g.start_datetime as gig_datetime,
-        g.duration_hours as gig_duration_hours,
+        COALESCE(g.start_datetime, g.datetime) as gig_datetime,
+        COALESCE(g.duration_hours, 8) as gig_duration_hours,
         u.name as usher_name,
         u.phone as usher_phone,
         u.email as usher_email,
-        ush.rating as usher_rating,
-        ush.experience_years as usher_experience_years,
-        ush.skills as usher_skills,
-        ush.vcash_number as usher_vcash_number,
+        COALESCE(ush.rating, 0) as usher_rating,
+        COALESCE(ush.experience_years, 0) as usher_experience_years,
+        COALESCE(ush.skills, '{}') as usher_skills,
+        COALESCE(ush.vcash_number, '') as usher_vcash_number,
         ush.profile_photo_url as usher_profile_photo_url
       FROM applications a
       JOIN gigs g ON a.gig_id = g.id

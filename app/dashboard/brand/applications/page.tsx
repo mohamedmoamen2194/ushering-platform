@@ -32,6 +32,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ProtectedRoute } from "@/components/protected-route"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 interface Application {
   id: number
@@ -90,10 +91,32 @@ export default function ApplicationsPage() {
       }
 
       const response = await fetch(url)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
-      setApplications(data.applications || [])
+      
+      if (data.success) {
+        // Ensure all applications have required fields with defaults
+        const processedApplications = (data.applications || []).map((app: any) => ({
+          ...app,
+          gig_duration_hours: app.gig_duration_hours || 8,
+          usher_rating: app.usher_rating || 0,
+          usher_experience_years: app.usher_experience_years || 0,
+          usher_skills: Array.isArray(app.usher_skills) ? app.usher_skills : [],
+          usher_vcash_number: app.usher_vcash_number || '',
+          usher_profile_photo_url: app.usher_profile_photo_url || null
+        }))
+        
+        setApplications(processedApplications)
+      } else {
+        throw new Error(data.error || 'Failed to fetch applications')
+      }
     } catch (error) {
       console.error("Failed to fetch applications:", error)
+      setApplications([])
     } finally {
       setLoading(false)
     }
@@ -122,64 +145,90 @@ export default function ApplicationsPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
+    try {
+      if (!dateString) return language === "ar" ? "غير محدد" : "Not specified"
+      
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return language === "ar" ? "تاريخ غير صحيح" : "Invalid date"
+      }
+      
+      return date.toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    } catch (error) {
+      console.error("Date formatting error:", error)
+      return language === "ar" ? "خطأ في التاريخ" : "Date error"
+    }
   }
 
   const getStatusColor = (status: string, gigDateTime?: string, durationHours?: number) => {
-    // Check if gig is old (end date has passed)
-    let isOldGig = false
-    if (gigDateTime && durationHours) {
-      const startDate = new Date(gigDateTime)
-      const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
-      const now = new Date()
-      isOldGig = endDate < now
-    }
+    try {
+      // Check if gig is old (end date has passed)
+      let isOldGig = false
+      if (gigDateTime && durationHours && !isNaN(durationHours)) {
+        const startDate = new Date(gigDateTime)
+        if (!isNaN(startDate.getTime())) {
+          const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
+          const now = new Date()
+          isOldGig = endDate < now
+        }
+      }
 
-    // Override status if gig is old
-    const effectiveStatus = isOldGig ? 'old' : status
+      // Override status if gig is old
+      const effectiveStatus = isOldGig ? 'old' : status
 
-    switch (effectiveStatus) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-      case "approved":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-      case "rejected":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-      case "old":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+      switch (effectiveStatus) {
+        case "pending":
+          return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+        case "approved":
+          return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+        case "rejected":
+          return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+        case "old":
+          return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+        default:
+          return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+      }
+    } catch (error) {
+      console.error("Status color error:", error)
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
     }
   }
 
   const getStatusText = (status: string, gigDateTime?: string, durationHours?: number) => {
-    // Check if gig is old (end date has passed)
-    let isOldGig = false
-    if (gigDateTime && durationHours) {
-      const startDate = new Date(gigDateTime)
-      const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
-      const now = new Date()
-      isOldGig = endDate < now
-    }
+    try {
+      // Check if gig is old (end date has passed)
+      let isOldGig = false
+      if (gigDateTime && durationHours && !isNaN(durationHours)) {
+        const startDate = new Date(gigDateTime)
+        if (!isNaN(startDate.getTime())) {
+          const endDate = new Date(startDate.getTime() + (durationHours * 60 * 60 * 1000))
+          const now = new Date()
+          isOldGig = endDate < now
+        }
+      }
 
-    // Override status if gig is old
-    const effectiveStatus = isOldGig ? 'old' : status
+      // Override status if gig is old
+      const effectiveStatus = isOldGig ? 'old' : status
 
-    switch (effectiveStatus) {
-      case "pending":
-        return language === "ar" ? "معلق" : "Pending"
-      case "approved":
-        return language === "ar" ? "مقبول" : "Approved"
-      case "rejected":
-        return language === "ar" ? "مرفوض" : "Rejected"
-      case "old":
-        return language === "ar" ? "وظيفة قديمة" : "Old Gig"
-      default:
-        return effectiveStatus
+      switch (effectiveStatus) {
+        case "pending":
+          return language === "ar" ? "معلق" : "Pending"
+        case "approved":
+          return language === "ar" ? "مقبول" : "Approved"
+        case "rejected":
+          return language === "ar" ? "مرفوض" : "Rejected"
+        case "old":
+          return language === "ar" ? "وظيفة قديمة" : "Old Gig"
+        default:
+          return effectiveStatus || (language === "ar" ? "غير معروف" : "Unknown")
+      }
+    } catch (error) {
+      console.error("Status text error:", error)
+      return language === "ar" ? "خطأ" : "Error"
     }
   }
 
@@ -209,8 +258,9 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole="brand">
-      <div className={`min-h-screen bg-background ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+    <ErrorBoundary>
+      <ProtectedRoute requiredRole="brand">
+        <div className={`min-h-screen bg-background ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
         {/* Header */}
         <header className="bg-card shadow-sm border-b border-border">
           <div className="container mx-auto px-4 py-4">
@@ -507,7 +557,8 @@ export default function ApplicationsPage() {
             </div>
           )}
         </div>
-      </div>
-    </ProtectedRoute>
+        </div>
+      </ProtectedRoute>
+    </ErrorBoundary>
   )
 }
