@@ -23,28 +23,59 @@ export async function GET(
 
     // Verify user has access to this gig (either brand owner or approved usher)
     // Allow access to expired/completed gigs for post-gig communication
-    const accessCheck = await sql`
-      SELECT 
-        CASE 
-          WHEN g.brand_id = ${parseInt(userId)} THEN 'brand'
-          WHEN EXISTS (
-            SELECT 1 FROM applications a 
-            WHERE a.gig_id = ${gigId} 
-            AND a.usher_id = ${parseInt(userId)} 
-            AND a.status = 'approved'
-          ) THEN 'usher'
-          ELSE 'none'
-        END as access_type,
-        g.title as gig_title,
-        g.status as gig_status,
-        g.start_datetime,
-        g.duration_hours
-      FROM gigs g
-      WHERE g.id = ${gigId}
-      -- Allow access to all gigs regardless of status or time
-    `
+    console.log(`🔍 Chat access check: gigId=${gigId}, userId=${userId}`)
+    
+    let accessCheck
+    try {
+      accessCheck = await sql`
+        SELECT 
+          CASE 
+            WHEN g.brand_id = ${parseInt(userId)} THEN 'brand'
+            WHEN EXISTS (
+              SELECT 1 FROM applications a 
+              WHERE a.gig_id = ${gigId} 
+              AND a.usher_id = ${parseInt(userId)} 
+              AND a.status = 'approved'
+            ) THEN 'usher'
+            ELSE 'none'
+          END as access_type,
+          g.title as gig_title,
+          COALESCE(g.status, 'active') as gig_status,
+          g.brand_id,
+          g.id as gig_exists
+        FROM gigs g
+        WHERE g.id = ${gigId}
+      `
+      
+      console.log(`✅ Access check query successful: ${accessCheck.length} results`)
+      if (accessCheck.length > 0) {
+        console.log(`📊 Access result:`, {
+          access_type: accessCheck[0].access_type,
+          gig_title: accessCheck[0].gig_title,
+          brand_id: accessCheck[0].brand_id,
+          user_id: parseInt(userId)
+        })
+      }
+      
+    } catch (error) {
+      console.error('❌ Access check query failed:', error)
+      return NextResponse.json({ error: 'Database error during access check' }, { status: 500 })
+    }
 
     if (accessCheck.length === 0) {
+      console.log(`❌ Gig ${gigId} not found in database`)
+      
+      // Let's also check if there are applications for this gig
+      try {
+        const appCheck = await sql`
+          SELECT gig_id, usher_id, status FROM applications 
+          WHERE gig_id = ${gigId} AND usher_id = ${parseInt(userId)}
+        `
+        console.log(`🔍 Application check for gig ${gigId}:`, appCheck)
+      } catch (e) {
+        console.log(`❌ Application check failed:`, e)
+      }
+      
       return NextResponse.json({ error: 'Gig not found' }, { status: 404 })
     }
 
@@ -132,27 +163,50 @@ export async function POST(
     }
 
     // Verify user has access to send messages to this gig
-    const accessCheck = await sql`
-      SELECT 
-        CASE 
-          WHEN g.brand_id = ${parseInt(senderId)} THEN 'brand'
-          WHEN EXISTS (
-            SELECT 1 FROM applications a 
-            WHERE a.gig_id = ${gigId} 
-            AND a.usher_id = ${parseInt(senderId)} 
-            AND a.status = 'approved'
-          ) THEN 'usher'
-          ELSE 'none'
-        END as access_type,
-        g.title as gig_title,
-        u.name as sender_name,
-        u.role as sender_role
-      FROM gigs g
-      JOIN users u ON u.id = ${parseInt(senderId)}
-      WHERE g.id = ${gigId}
-    `
+    console.log(`🔍 POST Chat access check: gigId=${gigId}, senderId=${senderId}`)
+    
+    let accessCheck
+    try {
+      accessCheck = await sql`
+        SELECT 
+          CASE 
+            WHEN g.brand_id = ${parseInt(senderId)} THEN 'brand'
+            WHEN EXISTS (
+              SELECT 1 FROM applications a 
+              WHERE a.gig_id = ${gigId} 
+              AND a.usher_id = ${parseInt(senderId)} 
+              AND a.status = 'approved'
+            ) THEN 'usher'
+            ELSE 'none'
+          END as access_type,
+          g.title as gig_title,
+          u.name as sender_name,
+          u.role as sender_role,
+          g.brand_id,
+          g.id as gig_exists
+        FROM gigs g
+        JOIN users u ON u.id = ${parseInt(senderId)}
+        WHERE g.id = ${gigId}
+      `
+      
+      console.log(`✅ POST Access check query successful: ${accessCheck.length} results`)
+      if (accessCheck.length > 0) {
+        console.log(`📊 POST Access result:`, {
+          access_type: accessCheck[0].access_type,
+          gig_title: accessCheck[0].gig_title,
+          sender_name: accessCheck[0].sender_name,
+          brand_id: accessCheck[0].brand_id,
+          sender_id: parseInt(senderId)
+        })
+      }
+      
+    } catch (error) {
+      console.error('❌ POST access check query failed:', error)
+      return NextResponse.json({ error: 'Database error during access verification' }, { status: 500 })
+    }
 
     if (accessCheck.length === 0) {
+      console.log(`❌ POST: Gig ${gigId} or user ${senderId} not found`)
       return NextResponse.json({ error: 'Gig or user not found' }, { status: 404 })
     }
 
@@ -206,14 +260,13 @@ export async function POST(
 
         // Store notification in database only (no WhatsApp sending)
         await sql`
-          INSERT INTO notifications (user_id, title, message, type, reference_id, priority, status)
+          INSERT INTO notifications (user_id, title, message, type, reference_id, status)
           VALUES (
             ${recipient.id}, 
             ${notificationTitle}, 
             ${notificationMessage}, 
             ${effectiveIsAnnouncement ? 'gig_announcement' : 'gig_message'}, 
             ${gigId.toString()}, 
-            'medium',
             'delivered'
           )
         `

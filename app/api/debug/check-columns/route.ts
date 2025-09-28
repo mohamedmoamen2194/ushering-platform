@@ -19,6 +19,22 @@ export async function GET() {
       ORDER BY ordinal_position
     `
 
+    // Check if gig_messages table exists
+    const gigMessagesTable = await sql`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'gig_messages' 
+      ORDER BY ordinal_position
+    `
+
+    // Check what tables exist
+    const allTables = await sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `
+
     // Try a simple query to see if it works
     const testQuery = await sql`
       SELECT 
@@ -36,6 +52,8 @@ export async function GET() {
       success: true,
       usherColumns: usherColumns,
       gigColumns: gigColumns,
+      gigMessagesColumns: gigMessagesTable,
+      allTables: allTables.map(t => t.table_name),
       testQuery: testQuery
     })
 

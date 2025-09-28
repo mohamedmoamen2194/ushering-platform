@@ -131,6 +131,36 @@ export async function GET(request: NextRequest) {
 
       let result = await gigQuery
       console.log("✅ Available gigs fetched:", result.length, "gigs")
+      
+      // Debug: Log gig details to see what's being filtered
+      if (result.length > 0) {
+        console.log("📊 Sample gig data:", {
+          id: result[0].id,
+          title: result[0].title,
+          approved_ushers: result[0].approved_ushers,
+          total_ushers_needed: result[0].total_ushers_needed,
+          application_status: result[0].application_status
+        })
+      } else {
+        console.log("🔍 No gigs found - checking why...")
+        // Check if there are any gigs at all
+        const allGigs = await sql`
+          SELECT id, title, status, start_datetime, brand_id, 
+                 (SELECT COUNT(*) FROM applications a WHERE a.gig_id = g.id AND a.status = 'approved') as approved_ushers,
+                 total_ushers_needed
+          FROM gigs g 
+          ORDER BY start_datetime DESC 
+          LIMIT 5
+        `
+        console.log("📋 All gigs in database:", allGigs.map(g => ({
+          id: g.id,
+          title: g.title,
+          status: g.status,
+          approved_ushers: g.approved_ushers,
+          total_ushers_needed: g.total_ushers_needed,
+          start_datetime: g.start_datetime
+        })))
+      }
 
       // ONLY filter for date conflicts if user has PENDING applications
       if (userId && hasNewColumns && result.length > 0) {

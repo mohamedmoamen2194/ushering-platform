@@ -161,9 +161,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Application not found" }, { status: 404 })
     }
 
-    // Send enhanced notification to usher
+    // Get application and gig details
     const appData = await sql`
-      SELECT a.usher_id, g.title 
+      SELECT a.usher_id, a.gig_id, g.title, g.total_ushers_needed,
+             (SELECT COUNT(*) FROM applications WHERE gig_id = a.gig_id AND status = 'approved') as approved_count
       FROM applications a
       JOIN gigs g ON a.gig_id = g.id
       WHERE a.id = ${applicationId}
@@ -171,9 +172,45 @@ export async function PATCH(request: NextRequest) {
 
     if (appData.length > 0) {
       const app = appData[0]
+      
+      // Send notification to the usher whose application was updated
       await notificationService.sendNotification(
         NotificationHelpers.applicationStatusChange(app.usher_id, app.title, status)
       )
+
+      // If this application was approved, check if gig is now full
+      if (status.toLowerCase() === 'approved') {
+        console.log(`📊 Gig ${app.gig_id} status: ${app.approved_count}/${app.total_ushers_needed} approved`)
+        
+        // If gig has reached capacity, auto-reject remaining pending applications
+        if (app.approved_count >= app.total_ushers_needed) {
+          console.log(`🎯 Gig ${app.gig_id} is now full! Auto-rejecting remaining pending applications...`)
+          
+          // Get all pending applications for this gig
+          const pendingApps = await sql`
+            SELECT id, usher_id FROM applications 
+            WHERE gig_id = ${app.gig_id} AND status = 'pending'
+          `
+          
+          if (pendingApps.length > 0) {
+            // Auto-reject all pending applications
+            await sql`
+              UPDATE applications 
+              SET status = 'rejected', reviewed_at = NOW()
+              WHERE gig_id = ${app.gig_id} AND status = 'pending'
+            `
+            
+            console.log(`✅ Auto-rejected ${pendingApps.length} pending applications for full gig`)
+            
+            // Send notifications to all auto-rejected ushers
+            for (const pendingApp of pendingApps) {
+              await notificationService.sendNotification(
+                NotificationHelpers.applicationStatusChange(pendingApp.usher_id, app.title, 'rejected')
+              )
+            }
+          }
+        }
+      }
     }
 
     return NextResponse.json({

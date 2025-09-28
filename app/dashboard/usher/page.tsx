@@ -393,7 +393,7 @@ export default function UsherDashboard() {
                       
                       <div className="border rounded-lg overflow-hidden">
                         <GigChat
-                          gigId={selectedChatGig.id}
+                          gigId={selectedChatGig.gig_id}
                           gigTitle={selectedChatGig.title || selectedChatGig.gig_title}
                           userAccess="usher"
                         />
