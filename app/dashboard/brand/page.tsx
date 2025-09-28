@@ -145,7 +145,12 @@ export default function BrandDashboard() {
       
       if (data.success !== false) {
         console.log("✅ Fresh stats fetched:", data)
-        setStats(data)
+        const s = data.stats || {}
+        setStats({
+          walletBalance: s.wallet_balance || 0,
+          activeGigs: s.active_gigs || 0,
+          totalUshersHired: s.total_ushers_hired || 0,
+        })
       } else {
         console.error("❌ Failed to fetch stats:", data.error)
       }
