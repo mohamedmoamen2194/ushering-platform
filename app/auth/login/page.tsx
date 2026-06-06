@@ -199,7 +199,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-custom-black dark:to-custom-navy flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
+      className={`min-h-screen bg-gradient-to-br from-background to-muted dark:from-background dark:to-card flex items-center justify-center p-4 ${isRTL ? "font-arabic" : ""}`}
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="w-full max-w-md">
@@ -352,11 +352,11 @@ export default function LoginPage() {
 
             {/* Password Setup Form */}
             {showPasswordSetup && (
-              <div className="mt-6 p-4 border border-orange-200 bg-orange-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-orange-800 mb-3">
+                <div className="mt-6 p-4 border border-primary/30 bg-primary/5 rounded-lg">
+                <h3 className="text-lg font-semibold text-primary mb-3">
                   {language === "ar" ? "إعداد كلمة المرور" : "Set Up Password"}
                 </h3>
-                <p className="text-sm text-orange-700 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {language === "ar" 
                     ? "يبدو أن هذا هو أول تسجيل دخول لك. يرجى إعداد كلمة مرور لحسابك."
                     : "This appears to be your first login. Please set up a password for your account."
@@ -384,7 +384,7 @@ export default function LoginPage() {
                   </div>
 
                   {/* Password Setup Button */}
-                  <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -404,13 +404,13 @@ export default function LoginPage() {
             <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-muted-foreground">
                 {language === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
-                <Link href="/auth/register" className="text-blue-600 hover:underline">
+                <Link href="/auth/register" className="text-primary hover:underline">
                   {language === "ar" ? "إنشاء حساب جديد" : "Create new account"}
                 </Link>
               </p>
               
               <p className="text-sm text-muted-foreground">
-                <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">
+                <Link href="/auth/forgot-password" className="text-primary hover:underline">
                   {language === "ar" ? "نسيت كلمة المرور؟" : "Forgot password?"}
                 </Link>
               </p>
@@ -423,7 +423,7 @@ export default function LoginPage() {
           <p>
             {language === "ar" 
               ? "© 2024 منصة أورا. جميع الحقوق محفوظة."
-              : "© 2024 Aura Platform. All rights reserved."
+              : "© 2024 PlanZ gigs. All rights reserved."
             }
           </p>
         </div>

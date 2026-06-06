@@ -262,7 +262,7 @@ export function NotificationPreferences({ userId, onSave }: NotificationPreferen
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-orange-600" />
+                <Bell className="w-5 h-5 text-neon-primary" />
                 <div>
                   <Label className="font-medium">
                     {language === 'ar' ? 'تحديثات الطلبات' : 'Application Updates'}

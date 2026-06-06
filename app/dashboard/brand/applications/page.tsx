@@ -352,8 +352,8 @@ export default function ApplicationsPage() {
           ) : (
             <div className="space-y-6">
               {/* Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card className="bg-card border-border">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <Card className="card-hover animate-fade-in-up">
                   <CardContent className="p-4">
                     <div className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                       {applications.filter((app) => app.status === "pending").length}
@@ -361,7 +361,7 @@ export default function ApplicationsPage() {
                     <p className="text-xs sm:text-sm text-muted-foreground">{language === "ar" ? "طلبات معلقة" : "Pending Applications"}</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-card border-border">
+                <Card className="card-hover animate-fade-in-up">
                   <CardContent className="p-4">
                     <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                       {applications.filter((app) => app.status === "approved").length}
@@ -371,7 +371,7 @@ export default function ApplicationsPage() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-card border-border sm:col-span-2 lg:col-span-1">
+                <Card className="card-hover animate-fade-in-up col-span-2 lg:col-span-1">
                   <CardContent className="p-4">
                     <div className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
                       {applications.filter((app) => app.status === "rejected").length}
@@ -383,8 +383,8 @@ export default function ApplicationsPage() {
 
               {/* Applications List */}
               <div className="space-y-4">
-                {applications.map((application) => (
-                  <Card key={application.id} className="bg-card border-border">
+                {applications.map((application, i) => (
+                  <Card key={application.id} className="bg-card border-border card-hover animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
                         <div className="flex-1 min-w-0">

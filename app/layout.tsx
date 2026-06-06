@@ -1,18 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Noto_Sans_Arabic } from "next/font/google"
+import { Noto_Sans_Arabic } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { ThemeProvider } from "@/lib/theme-context"
 import "./globals.css"
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: 'swap'
-})
-
-const notoSansArabic = Noto_Sans_Arabic({ 
+const notoSansArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-noto-sans-arabic",
@@ -20,7 +16,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 })
 
 export const metadata: Metadata = {
-  title: "Aura",
+  title: "PlanZ gigs",
   description: "Connect brands with professional ushers for North Coast summer events",
   generator: 'v0.dev',
   icons: {
@@ -37,8 +33,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" suppressHydrationWarning>
-      <body className={`${inter.variable} ${notoSansArabic.variable} font-sans antialiased`}>
-        <ThemeProvider>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${notoSansArabic.variable} font-sans`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <div className="bg-particles" aria-hidden="true">
+            <span /><span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
+          </div>
           <LanguageProvider>
             <AuthProvider>{children}</AuthProvider>
           </LanguageProvider>

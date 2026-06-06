@@ -191,7 +191,7 @@ export default function SetupPage() {
                 <CardTitle className="text-green-600">🎉 Setup Complete!</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4">Your Aura platform is ready to use. You can now:</p>
+                <p className="text-gray-600 mb-4">Your PlanZ gigs platform is ready to use. You can now:</p>
                 <div className="space-y-2">
                   <Link href="/auth/register">
                     <Button className="w-full">Start Registration</Button>

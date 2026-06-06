@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     await sql`
       -- Insert admin user
       INSERT INTO users (phone, name, email, role, language) VALUES
-      ('+201000000001', 'Admin User', 'admin@aura-platform.com', 'admin', 'ar')
+      ('+201000000001', 'Admin User', 'admin@planz-gigs.com', 'admin', 'ar')
       ON CONFLICT (phone) DO NOTHING;
 
       -- Insert sample brand

@@ -74,55 +74,44 @@ export default function HomePage() {
   const handleLogout = () => { logout(); }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 dark:from-custom-black dark:to-custom-navy ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
+    <div className={`min-h-screen bg-gradient-to-br from-background to-muted dark:from-background dark:to-card ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <header className="bg-card shadow-sm border-b border-border">
-        <div className="container mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 max-w-4xl flex flex-col items-center">
-          {/* Logo */}
-          <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mx-auto mb-2">
-            <img src="/logo.svg" alt="logo" className="w-full h-full object-cover" />
-          </div>
-          {/* Header Text */}
-          <div className="text-center mb-2">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-card-foreground">{language === "ar" ? "مرحباً،" : "Welcome,"} {user ? user.name : ""}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              {language === "ar" ? "الصفحة الرئيسية" : "Home"}
-            </p>
-          </div>
-          {/* Header Actions */}
-          <div className="flex flex-wrap justify-center items-center gap-2 mt-2 w-full">
-            <ThemeToggle />
-            <LanguageSwitcher />
-            {user ? (
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-                {language === "ar" ? "خروج" : "Logout"}
-              </Button>
-            ) : (
-              <>
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">
-                    {language === "ar" ? "تسجيل الدخول" : "Login"}
-                  </Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button variant="ghost" size="sm">
-                    {language === "ar" ? "تسجيل" : "Register"}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
+        <div className="container mx-auto px-4 max-w-7xl flex items-center justify-end gap-2 py-3">
+          <ThemeToggle />
+          <LanguageSwitcher />
+          {user ? (
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
+              {language === "ar" ? "خروج" : "Logout"}
+            </Button>
+          ) : (
+            <>
+              <Link href="/auth/login">
+                <Button variant="ghost" size="sm">
+                  {language === "ar" ? "تسجيل الدخول" : "Login"}
+                </Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button variant="ghost" size="sm">
+                  {language === "ar" ? "تسجيل" : "Register"}
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            {language === "ar" ? "منصة أورا" : "Aura Platform"}
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center relative">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium mb-8 neon-lamp-container">
+            {language === "ar" ? "منصة رائدة في عالم الضيافة" : "Leading Hospitality Platform"}
+          </div>
+          <div className="flex justify-center mb-8">
+            <img src="/logo.svg" alt="PlanZ gigs" className="h-20 sm:h-28 w-auto dark:filter-none filter invert" />
+          </div>
+          <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
             {language === "ar" 
               ? "اربط العلامات التجارية مع المضيفين المحترفين لتجارب استثنائية في الفعاليات والمناسبات"
               : "Connect brands with professional ushers for exceptional event experiences"
@@ -130,13 +119,13 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register?role=usher">
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto shadow-neon-primary/30 hover:shadow-neon-primary/50 transition-shadow duration-300">
                 {language === "ar" ? "انضم كمضيف" : "Join as Usher"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/auth/register?role=brand">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary/40 hover:border-primary/60 hover:bg-primary/5">
                 {language === "ar" ? "انضم كعلامة تجارية" : "Join as Brand"}
               </Button>
             </Link>
@@ -145,7 +134,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-custom-navy">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-card">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
@@ -163,8 +152,8 @@ export default function HomePage() {
             )}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            <Card className="card-hover animate-fade-in-up">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {language === "ar" ? "إجمالي المستخدمين" : "Total Users"}
@@ -178,7 +167,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="card-hover animate-fade-in-up">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {language === "ar" ? "إجمالي الوظائف" : "Total Gigs"}
@@ -192,7 +181,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="card-hover animate-fade-in-up">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {language === "ar" ? "إجمالي الطلبات" : "Total Applications"}
@@ -206,7 +195,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="card-hover animate-fade-in-up">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {language === "ar" ? "المستخدمون النشطون" : "Active Users"}
@@ -224,77 +213,76 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              {language === "ar" ? "لماذا تختار أورا؟" : "Why Choose Aura?"}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-3">
+              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                {language === "ar" ? "لماذا تختار بلان زي جيغس؟" : "Why Choose PlanZ gigs?"}
+              </span>
             </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              {language === "ar"
+                ? "منصتنا تجمع الأفضل في عالم الضيافة والخدمات"
+                : "Our platform brings together the best in hospitality and services"}
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Star className="h-6 w-6 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="animate-fade-in-up">
+              <div className="relative group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 sm:p-8 card-hover neon-glow-cyan">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/5 flex items-center justify-center mb-5 ring-1 ring-accent/20 group-hover:ring-accent/40 transition-all duration-300">
+                  <Star className="h-7 w-7 text-accent icon-glow" />
                 </div>
-                <CardTitle>
+                <h3 className="text-xl font-semibold mb-3 text-card-foreground">
                   {language === "ar" ? "مضيفون محترفون" : "Professional Ushers"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {language === "ar" 
-                    ? "مضيفون مدربون ومؤهلون لتقديم أفضل تجربة ضيافة"
-                    : "Trained and qualified ushers for the best hospitality experience"
-                  }
+                    ? "مضيفون مدربون ومؤهلون لتقديم أفضل تجربة ضيافة لعملائك"
+                    : "Trained and qualified ushers delivering exceptional hospitality experiences"}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <MapPin className="h-6 w-6 text-green-600" />
+            <div className="animate-fade-in-up">
+              <div className="relative group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 sm:p-8 card-hover neon-glow-lime">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-secondary/30 to-secondary/5 flex items-center justify-center mb-5 ring-1 ring-secondary/20 group-hover:ring-secondary/40 transition-all duration-300">
+                  <MapPin className="h-7 w-7 text-secondary icon-glow" />
                 </div>
-                <CardTitle>
-                  {language === "ar" ? "تغطية شاملة" : "Wide Coverage"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                <h3 className="text-xl font-semibold mb-3 text-card-foreground">
+                  {language === "ar" ? "تغطية شاملة" : "Nationwide Coverage"}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {language === "ar" 
-                    ? "خدماتنا متاحة في جميع أنحاء مصر"
-                    : "Our services are available throughout Egypt"
-                  }
+                    ? "خدماتنا متاحة في جميع أنحاء مصر لتلبية احتياجاتك أينما كنت"
+                    : "Our services are available across all of Egypt, wherever you need us"}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <Clock className="h-6 w-6 text-purple-600" />
+            <div className="animate-fade-in-up">
+              <div className="relative group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 sm:p-8 card-hover neon-glow-pink">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center mb-5 ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+                  <Clock className="h-7 w-7 text-primary icon-glow" />
                 </div>
-                <CardTitle>
+                <h3 className="text-xl font-semibold mb-3 text-card-foreground">
                   {language === "ar" ? "حجز سريع" : "Quick Booking"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 dark:text-gray-300">
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {language === "ar" 
-                    ? "احجز مضيفيك في دقائق معدودة"
-                    : "Book your ushers in just a few minutes"
-                  }
+                    ? "احجز مضيفيك في دقائق معدودة بعملية سلسة ومبسطة"
+                    : "Book your ushers in minutes with a smooth, streamlined process"}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-600">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary to-accent">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             {language === "ar" ? "ابدأ رحلتك معنا اليوم" : "Start Your Journey With Us Today"}
@@ -302,7 +290,7 @@ export default function HomePage() {
           <p className="text-xl text-blue-100 mb-8">
             {language === "ar" 
               ? "انضم إلى آلاف المضيفين والعلامات التجارية الذين يثقون في أورا"
-              : "Join thousands of ushers and brands who trust Aura"
+              : "Join thousands of ushers and brands who trust PlanZ gigs"
             }
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -393,7 +381,7 @@ export default function HomePage() {
           </div>
           
           <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Aura. {language === "ar" ? "جميع الحقوق محفوظة" : "All rights reserved"}.</p>
+            <p>&copy; 2024 PlanZ gigs. {language === "ar" ? "جميع الحقوق محفوظة" : "All rights reserved"}.</p>
           </div>
         </div>
       </footer>

@@ -236,7 +236,7 @@ class NotificationService {
    */
   private async sendWhatsAppNotification(phone: string, title: string, message: string, language: string = 'en'): Promise<void> {
     try {
-      const whatsappMessage = `🔔 ${title}\n\n${message}\n\n${language === 'ar' ? 'منصة أورا' : 'Aura Platform'}`
+      const whatsappMessage = `🔔 ${title}\n\n${message}\n\n${language === 'ar' ? 'بلان زي جيغس' : 'PlanZ gigs'}`
       
       // For now, we'll use the verification code method to send general messages
       // In a production environment, you'd want to create specific WhatsApp templates

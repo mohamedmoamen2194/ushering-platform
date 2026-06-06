@@ -116,7 +116,7 @@ export default function VerifiedNumbersPage() {
       </div>
 
       {/* Add New Number Form */}
-      <Card className="mb-6">
+      <Card className="mb-6 card-hover">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
@@ -170,7 +170,7 @@ export default function VerifiedNumbersPage() {
       )}
 
       {/* Verified Numbers List */}
-      <Card>
+      <Card className="card-hover">
         <CardHeader>
           <CardTitle>Verified Numbers ({verifiedNumbers.length})</CardTitle>
         </CardHeader>
@@ -181,10 +181,11 @@ export default function VerifiedNumbersPage() {
             </p>
           ) : (
             <div className="space-y-4">
-              {verifiedNumbers.map((number) => (
+              {verifiedNumbers.map((number, i) => (
                 <div
                   key={number.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-center justify-between p-4 border rounded-lg animate-fade-in-up"
+                  style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

@@ -19,13 +19,13 @@ export async function GET() {
           '1. Create Meta Developer account at developers.facebook.com',
           '2. Create WhatsApp Business app',
           '3. Get Access Token and Phone Number ID',
-          '4. Create message template named "aura"',
+          '4. Create message template named "planz_gigs"',
           '5. Add WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID to .env.local'
         ],
         template: {
-          name: 'aura',
+          name: 'planz_gigs',
           category: 'Authentication',
-          content: 'Your Aura verification code is: {{1}}. Valid for 10 minutes.\n\nDo not share this code with anyone.'
+          content: 'Your PlanZ gigs verification code is: {{1}}. Valid for 10 minutes.\n\nDo not share this code with anyone.'
         }
       },
       benefits: [

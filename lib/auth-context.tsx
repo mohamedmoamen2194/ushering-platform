@@ -47,8 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (phone: string, password?: string): Promise<boolean> => {
     try {
-      console.log("Attempting login for phone:", phone)
-
       const requestBody: any = { phone }
       if (password) {
         requestBody.password = password
@@ -60,58 +58,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(requestBody),
       })
 
-      console.log("Login response status:", response.status)
-
       const data = await response.json()
-      console.log("Login response data:", data)
 
       if (data.success && data.user) {
-        console.log("Login successful, setting user:", data.user)
         setUser(data.user)
         localStorage.setItem("aura_user", JSON.stringify(data.user))
         return true
       } else {
-        console.error("Login failed:", data.error || "Unknown error")
         return false
       }
     } catch (error) {
-      console.error("Login error:", error)
       return false
     }
   }
 
   const register = async (userData: any): Promise<boolean> => {
     try {
-      console.log("Attempting registration with data:", userData)
-
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       })
 
-      console.log("Registration response status:", response.status)
-
       const data = await response.json()
-      console.log("Registration response data:", data)
 
       if (data.success && data.user) {
-        console.log("Registration successful, setting user:", data.user)
         setUser(data.user)
         localStorage.setItem("aura_user", JSON.stringify(data.user))
         return true
       } else {
-        console.error("Registration failed:", data.error || "Unknown error")
         return false
       }
     } catch (error) {
-      console.error("Registration error:", error)
       return false
     }
   }
 
   const logout = () => {
-    console.log("Logging out user")
     setUser(null)
     localStorage.removeItem("aura_user")
   }
@@ -148,8 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem("aura_user")
         }
       }
-    } catch (error) {
-      console.error("Session validation error:", error)
+    } catch {
       localStorage.removeItem("aura_user")
     } finally {
       setLoading(false)

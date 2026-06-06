@@ -20,7 +20,8 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
         arabic: ["var(--font-noto-sans-arabic)", "system-ui", "sans-serif"],
       },
       colors: {
@@ -57,58 +58,21 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Warm Dark Mode Color Variations
-        warm: {
-          50: "hsl(25, 20%, 95%)",
-          100: "hsl(25, 20%, 90%)",
-          200: "hsl(25, 20%, 80%)",
-          300: "hsl(25, 20%, 70%)",
-          400: "hsl(25, 20%, 60%)",
-          500: "hsl(25, 20%, 50%)",
-          600: "hsl(25, 20%, 40%)",
-          700: "hsl(25, 20%, 30%)",
-          800: "hsl(25, 20%, 20%)",
-          900: "hsl(25, 20%, 15%)",
-          950: "hsl(25, 20%, 10%)",
-        },
-        amber: {
-          50: "hsl(35, 100%, 95%)",
-          100: "hsl(35, 100%, 90%)",
-          200: "hsl(35, 100%, 80%)",
-          300: "hsl(35, 100%, 70%)",
-          400: "hsl(35, 100%, 60%)",
-          500: "hsl(35, 100%, 50%)",
-          600: "hsl(35, 100%, 40%)",
-          700: "hsl(35, 100%, 30%)",
-          800: "hsl(35, 100%, 20%)",
-          900: "hsl(35, 100%, 15%)",
-          950: "hsl(35, 100%, 10%)",
-        },
-        brown: {
-          50: "hsl(25, 30%, 95%)",
-          100: "hsl(25, 30%, 90%)",
-          200: "hsl(25, 30%, 80%)",
-          300: "hsl(25, 30%, 70%)",
-          400: "hsl(25, 30%, 60%)",
-          500: "hsl(25, 30%, 50%)",
-          600: "hsl(25, 30%, 40%)",
-          700: "hsl(25, 30%, 30%)",
-          800: "hsl(25, 30%, 20%)",
-          900: "hsl(25, 30%, 15%)",
-          950: "hsl(25, 30%, 10%)",
-        },
-        // Custom Dark Theme Colors
-        custom: {
-          black: "#000000",
-          navy: "#1A1A2E",
-          gold: "#F0A500",
-          lightGray: "#EAEAEA",
+        neon: {
+          primary: "#ff0080",
+          secondary: "#aaff00",
+          accent: "#00f5ff",
         },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "neon-primary": "0 0 10px rgba(255,0,128,0.5), 0 0 20px rgba(255,0,128,0.3)",
+        "neon-secondary": "0 0 10px rgba(170,255,0,0.5), 0 0 20px rgba(170,255,0,0.3)",
+        "neon-accent": "0 0 10px rgba(0,245,255,0.5), 0 0 20px rgba(0,245,255,0.3)",
       },
       keyframes: {
         "accordion-down": {
@@ -119,10 +83,34 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "neon-flicker": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.85" },
+          "92%": { opacity: "1" },
+          "93%": { opacity: "0.7" },
+          "94%": { opacity: "1" },
+        },
+        "neon-pulse": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.6", transform: "scale(0.85)" },
+        },
+        "liquid-fill": {
+          from: { transform: "translateY(100%)" },
+          to: { transform: "translateY(0%)" },
+        },
+        "theme-spin": {
+          "0%": { transform: "rotate(0deg) scale(1)" },
+          "50%": { transform: "rotate(180deg) scale(1.2)" },
+          "100%": { transform: "rotate(360deg) scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "neon-flicker": "neon-flicker 3s ease-in-out infinite",
+        "neon-pulse": "neon-pulse 1.5s ease-in-out infinite",
+        "liquid-fill": "liquid-fill 1s ease-out forwards",
+        "theme-spin": "theme-spin 0.4s ease-out",
       },
     },
   },

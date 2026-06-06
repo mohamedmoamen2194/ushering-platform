@@ -264,7 +264,7 @@ export function UsherHistory({ usherId, showInModal = false }: UsherHistoryProps
               <div className="text-xs sm:text-sm text-gray-600">{language === 'ar' ? 'متوسط الحضور' : 'Avg Attendance'}</div>
             </div>
             <div className="text-center p-2 sm:p-0">
-              <div className="text-lg sm:text-2xl font-bold text-orange-600">
+              <div className="text-lg sm:text-2xl font-bold text-neon-primary">
                 {performanceStats.totalEarnings.toLocaleString()} {language === 'ar' ? 'ج.م' : 'EGP'}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">{language === 'ar' ? 'إجمالي الأرباح' : 'Total Earnings'}</div>

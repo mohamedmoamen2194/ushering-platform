@@ -128,7 +128,7 @@ class WhatsAppService {
         to: formattedPhone,
         type: "template",
         template: {
-          name: "aura",
+          name: "planz_gigs",
           language: {
             code: "en"
           },
@@ -165,7 +165,7 @@ class WhatsAppService {
           to: formattedPhone,
           type: "text",
           text: {
-            body: `Your Aura verification code is: ${code}. Valid for 10 minutes.`
+            body: `Your PlanZ gigs verification code is: ${code}. Valid for 10 minutes.`
           }
         }
 
