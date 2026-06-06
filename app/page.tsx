@@ -109,7 +109,7 @@ export default function HomePage() {
             {language === "ar" ? "منصة رائدة في عالم الضيافة" : "Leading Hospitality Platform"}
           </div>
           <div className="flex justify-center mb-8">
-            <img src="/logo.svg" alt="PlanZ gigs" className="h-20 sm:h-28 w-auto dark:filter-none filter invert" />
+            <img src="/logo.svg" alt="PlanZ gigs" className="h-28 sm:h-36 w-auto dark:filter-none filter invert" />
           </div>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
             {language === "ar" 
