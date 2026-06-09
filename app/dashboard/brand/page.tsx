@@ -27,6 +27,7 @@ export default function BrandHome() {
     title: "", description: "", location: "", start_datetime: "", start_date: "",
     end_date: "", duration_hours: "", pay_rate: "", total_ushers_needed: "",
     skills_required: [] as string[], is_recurring: false,
+    dress_code: "", location_link: "", additional_requirements: "",
   })
 
   const getPreviewStartISO = () => {
@@ -79,7 +80,7 @@ export default function BrandHome() {
   const handleCreateGig = async () => {
     try {
       if (!newGig.title || !newGig.location || !newGig.start_date || !newGig.start_datetime ||
-          !newGig.duration_hours || !newGig.pay_rate || !newGig.total_ushers_needed) {
+          !newGig.duration_hours || !newGig.pay_rate || !newGig.total_ushers_needed || !newGig.dress_code) {
         alert(language === "ar" ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill in all required fields")
         return
       }
@@ -104,6 +105,7 @@ export default function BrandHome() {
           title: "", description: "", location: "", start_datetime: "", start_date: "",
           end_date: "", duration_hours: "", pay_rate: "", total_ushers_needed: "",
           skills_required: [], is_recurring: false,
+          dress_code: "", location_link: "", additional_requirements: "",
         })
         alert(language === "ar" ? "تم إنشاء الوظيفة بنجاح!" : "Gig created successfully!")
       } else {
@@ -261,19 +263,19 @@ export default function BrandHome() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="sd" className="text-xs text-card-foreground">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
-                    <Input id="sd" type="date" value={newGig.start_date} onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })} className="bg-background border-border h-10 text-sm" />
+                  <div onClick={(e) => { const i = (e.currentTarget as HTMLElement).querySelector('input') as HTMLInputElement; i?.showPicker?.(); i?.focus() }}>
+                    <Label htmlFor="sd" className="text-xs text-card-foreground cursor-pointer">{language === "ar" ? "تاريخ البداية" : "Start Date"}</Label>
+                    <Input id="sd" type="date" value={newGig.start_date} onChange={(e) => setNewGig({ ...newGig, start_date: e.target.value })} className="bg-background border-border h-10 text-sm cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                   </div>
-                  <div>
-                    <Label htmlFor="st" className="text-xs text-card-foreground">{language === "ar" ? "وقت البداية" : "Start Time"}</Label>
-                    <Input id="st" type="time" value={newGig.start_datetime} onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })} className="bg-background border-border h-10 text-sm" />
+                  <div onClick={(e) => { const i = (e.currentTarget as HTMLElement).querySelector('input') as HTMLInputElement; i?.showPicker?.(); i?.focus() }}>
+                    <Label htmlFor="st" className="text-xs text-card-foreground cursor-pointer">{language === "ar" ? "وقت البداية" : "Start Time"}</Label>
+                    <Input id="st" type="time" value={newGig.start_datetime} onChange={(e) => setNewGig({ ...newGig, start_datetime: e.target.value })} className="bg-background border-border h-10 text-sm cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label htmlFor="ed" className="text-xs text-card-foreground">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
-                    <Input id="ed" type="date" value={newGig.end_date} onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })} className="bg-background border-border h-10 text-sm" />
+                  <div onClick={(e) => { const i = (e.currentTarget as HTMLElement).querySelector('input') as HTMLInputElement; i?.showPicker?.(); i?.focus() }}>
+                    <Label htmlFor="ed" className="text-xs text-card-foreground cursor-pointer">{language === "ar" ? "تاريخ النهاية" : "End Date"}</Label>
+                    <Input id="ed" type="date" value={newGig.end_date} onChange={(e) => setNewGig({ ...newGig, end_date: e.target.value })} className="bg-background border-border h-10 text-sm cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                   </div>
                   <div>
                     <Label htmlFor="dh" className="text-xs text-card-foreground">{language === "ar" ? "ساعات/يوم" : "Hours/Day"}</Label>
@@ -283,6 +285,20 @@ export default function BrandHome() {
                     <Label htmlFor="un" className="text-xs text-card-foreground">{language === "ar" ? "عدد المضيفين" : "Ushers"}</Label>
                     <Input id="un" type="number" value={newGig.total_ushers_needed} onChange={(e) => setNewGig({ ...newGig, total_ushers_needed: e.target.value })} className="bg-background border-border h-10 text-sm" />
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="dc" className="text-xs text-card-foreground">
+                    {language === "ar" ? "قواعد اللبس" : "Dress Code"} <span className="text-destructive">*</span>
+                  </Label>
+                  <Input id="dc" value={newGig.dress_code} onChange={(e) => setNewGig({ ...newGig, dress_code: e.target.value })} className="bg-background border-border h-10 text-sm" placeholder={language === "ar" ? "مثال: رسمي، كاجوال" : "e.g. Formal, Casual"} />
+                </div>
+                <div>
+                  <Label htmlFor="ll" className="text-xs text-card-foreground">{language === "ar" ? "رابط الموقع على الخريطة" : "Location Link (Google Maps)"}</Label>
+                  <Input id="ll" value={newGig.location_link} onChange={(e) => setNewGig({ ...newGig, location_link: e.target.value })} className="bg-background border-border h-10 text-sm" placeholder="https://maps.google.com/..." />
+                </div>
+                <div>
+                  <Label htmlFor="ar" className="text-xs text-card-foreground">{language === "ar" ? "متطلبات إضافية" : "Additional Requirements"}</Label>
+                  <Textarea id="ar" value={newGig.additional_requirements} onChange={(e) => setNewGig({ ...newGig, additional_requirements: e.target.value })} className="bg-background border-border text-sm" rows={2} placeholder={language === "ar" ? "أي متطلبات إضافية..." : "Any extra requirements..."} />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button onClick={handleCreateGig} className="flex-1 h-10 text-sm">

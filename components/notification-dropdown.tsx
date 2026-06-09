@@ -21,7 +21,7 @@ interface NotificationDropdownProps {
 }
 
 export function NotificationDropdown({ role }: NotificationDropdownProps) {
-  const { language } = useLanguage()
+  const { language, isRTL } = useLanguage()
   const { user } = useAuth()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -85,7 +85,7 @@ export function NotificationDropdown({ role }: NotificationDropdownProps) {
         {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full animate-pulse" />}
       </Button>
       {open && (
-        <div className={`absolute top-full mt-2 ${language === "ar" ? "left-0" : "right-0"} w-72 sm:w-80 z-50 rounded-xl border border-border/60 bg-card/95 backdrop-blur-2xl shadow-2xl shadow-primary/5 overflow-hidden animate-fade-in-up`} style={{ animationDelay: "0s" }}>
+        <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 sm:${isRTL ? "left-0" : "right-0"} sm:translate-x-0 w-72 sm:w-80 z-50 rounded-xl border border-border/60 bg-card/95 backdrop-blur-2xl shadow-2xl shadow-primary/5 overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 ease-out`}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
             <span className="text-xs font-mono font-semibold text-muted-foreground/70">
               {language === "ar" ? "الإشعارات" : "Notifications"}

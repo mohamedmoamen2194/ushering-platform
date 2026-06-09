@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { LanguageSwitcher } from "@/components/language-switcher"
 import { UsherHistory } from "@/components/usher-history"
 import { useTranslation } from "@/lib/i18n"
 import { useLanguage } from "@/lib/language-context"
@@ -20,8 +19,6 @@ import {
   Star,
   Calendar,
   MapPin,
-  LogOut,
-  Bell,
   Filter,
   RefreshCw,
   Phone,
@@ -32,7 +29,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ProtectedRoute } from "@/components/protected-route"
-import { ErrorBoundary } from "@/components/error-boundary"
 
 interface Application {
   id: number
@@ -61,8 +57,23 @@ export default function ApplicationsPage() {
   const { language, isRTL } = useLanguage()
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState<string>("active") // 'active', 'pending', 'approved', 'rejected', 'all'
+  const [statusFilter, setStatusFilter] = useState<string>("active")
+  const [gigFilter, setGigFilter] = useState<string>("all")
+  const [expandedGigs, setExpandedGigs] = useState<Set<number>>(new Set())
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const { t } = useTranslation(language)
+
+  // Derive unique gigs
+  const uniqueGigs = Array.from(new Map(applications.map(a => [a.gig_id, { id: a.gig_id, title: a.gig_title, location: a.gig_location, datetime: a.gig_datetime }])).values())
+
+  // Group applications by gig_id
+  const gigGroups = uniqueGigs.map(gig => ({
+    ...gig,
+    applications: applications.filter(a => a.gig_id === gig.id),
+  }))
+
+  // Filtered applications when a specific gig is selected
+  const filteredApps = gigFilter === "all" ? null : applications.filter(a => a.gig_id === parseInt(gigFilter))
 
   useEffect(() => {
     // Only fetch data when user is available
@@ -258,7 +269,6 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <ErrorBoundary>
       <ProtectedRoute requiredRole="brand">
         <div className={`min-h-screen bg-background ${isRTL ? "font-arabic" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
         {/* Header */}
@@ -278,22 +288,6 @@ export default function ApplicationsPage() {
                   </h1>
                 </div>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <Button variant="ghost" size="sm">
-                  <Bell className="h-4 w-4" />
-                </Button>
-                <div className="hidden sm:block">
-                  <LanguageSwitcher />
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Logout"}</span>
-                </Button>
-              </div>
-            </div>
-            {/* Mobile Language Switcher */}
-            <div className="block sm:hidden mt-2">
-              <LanguageSwitcher />
             </div>
           </div>
         </header>
@@ -381,184 +375,234 @@ export default function ApplicationsPage() {
                 </Card>
               </div>
 
-              {/* Applications List */}
-              <div className="space-y-4">
-                {applications.map((application, i) => (
-                  <Card key={application.id} className="bg-card border-border card-hover animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                    <CardHeader>
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base sm:text-lg text-card-foreground break-words">{application.gig_title}</CardTitle>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-2">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4 flex-shrink-0" />
-                              <span className="truncate">{application.gig_location}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4 flex-shrink-0" />
-                              <span>{formatDate(application.gig_datetime)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Badge className={getStatusColor(application.status, application.gig_datetime, application.gig_duration_hours)}>
-                            {/* Add clock icon for old gigs */}
-                            {(() => {
-                              const startDate = new Date(application.gig_datetime)
-                              const endDate = new Date(startDate.getTime() + (application.gig_duration_hours * 60 * 60 * 1000))
-                              const isOldGig = endDate < new Date()
-                              return isOldGig ? (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="hidden sm:inline">{getStatusText(application.status, application.gig_datetime, application.gig_duration_hours)}</span>
-                                </div>
-                              ) : (
-                                <span className="text-xs sm:text-sm">{getStatusText(application.status, application.gig_datetime, application.gig_duration_hours)}</span>
-                              )
-                            })()}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <div className="flex items-start gap-3 sm:gap-4 w-full">
-                          <div className="relative flex-shrink-0">
-                            {application.usher_profile_photo_url ? (
-                              <img
-                                src={application.usher_profile_photo_url}
-                                alt={application.usher_name}
-                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-primary/20"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                                <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                              <h4 className="font-medium text-card-foreground truncate">{application.usher_name}</h4>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                                    <History className="h-4 w-4 mr-2" />
-                                    <span className="hidden sm:inline">{language === "ar" ? "عرض التاريخ" : "View History"}</span>
-                                    <span className="sm:hidden">{language === "ar" ? "التاريخ" : "History"}</span>
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle className="text-sm sm:text-base">
-                                      {language === "ar" ? `تاريخ عمل ${application.usher_name}` : `${application.usher_name}'s Work History`}
-                                    </DialogTitle>
-                                  </DialogHeader>
-                                  <UsherHistory usherId={application.usher_id} showInModal={true} />
-                                </DialogContent>
-                              </Dialog>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-2">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span>{application.usher_rating > 0 ? parseFloat(application.usher_rating).toFixed(1) : "0.0"}</span>
-                              </div>
-                              <span className="text-xs sm:text-sm">
-                                {application.usher_experience_years}{" "}
-                                {language === "ar" ? "سنوات خبرة" : "years experience"}
-                              </span>
-                            </div>
+              {/* Gig Filter */}
+              {uniqueGigs.length > 1 && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-card-foreground">{language === "ar" ? "الحدث:" : "Event:"}</span>
+                  </div>
+                  <Select value={gigFilter} onValueChange={setGigFilter}>
+                    <SelectTrigger className="w-full sm:w-56 bg-background border-border text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="all">{language === "ar" ? "كل الأحداث" : "All Events"}</SelectItem>
+                      {uniqueGigs.map(gig => (
+                        <SelectItem key={gig.id} value={String(gig.id)}>{gig.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-                            {/* Contact Information */}
-                            {application.status === "approved" && (
-                              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg mb-3">
-                                <h5 className="font-medium text-green-800 dark:text-green-400 mb-2">
-                                  {language === "ar" ? "معلومات الاتصال" : "Contact Information"}
-                                </h5>
-                                <div className="space-y-1 text-sm">
-                                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                                    <Phone className="h-4 w-4" />
-                                    <span>{application.usher_phone}</span>
+              {/* Gig-grouped view (when no specific gig selected) */}
+              {gigFilter === "all" ? (
+                <div className="space-y-6">
+                  {gigGroups.map((group) => {
+                    const isExpanded = expandedGigs.has(group.id)
+                    const displayApps = isExpanded ? group.applications : group.applications.slice(0, 3)
+                    const pendingCount = group.applications.filter(a => a.status === "pending").length
+                    return (
+                      <Card key={group.id} className="bg-card border-border overflow-hidden">
+                        {/* Gig header */}
+                        <div className="border-b border-border/60 bg-muted/10 px-4 sm:px-5 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-sm sm:text-base text-card-foreground break-words">{group.title}</h3>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{group.location}</span>
+                                <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(group.datetime)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge variant="outline" className="text-xs font-mono">
+                                {group.applications.length} {language === "ar" ? "متقدم" : "applicants"}
+                              </Badge>
+                              {pendingCount > 0 && (
+                                <Badge className="bg-yellow-100 text-yellow-800 text-xs font-mono">
+                                  {pendingCount} {language === "ar" ? "معلق" : "pending"}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Usher list */}
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="space-y-2">
+                            {displayApps.map((app) => (
+                              <button
+                                key={app.id}
+                                onClick={() => setSelectedApplication(app)}
+                                className="flex items-center gap-3 w-full text-left p-3 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-muted/20 transition-all"
+                              >
+                                {/* Photo */}
+                                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl shrink-0 border border-border/50 relative overflow-hidden bg-muted">
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <User className="h-5 w-5 text-muted-foreground/60" />
                                   </div>
-                                  {application.usher_email && (
-                                    <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                                      <Mail className="h-4 w-4" />
-                                      <span>{application.usher_email}</span>
-                                    </div>
-                                  )}
-                                  {application.usher_vcash_number && (
-                                    <div className="text-green-700 dark:text-green-300">
-                                      <span className="font-medium">
-                                        {language === "ar" ? "فودافون كاش:" : "Vodafone Cash:"}{" "}
-                                      </span>
-                                      {application.usher_vcash_number}
-                                    </div>
+                                  {app.usher_profile_photo_url && (
+                                    <img
+                                      src={app.usher_profile_photo_url}
+                                      alt=""
+                                      className="absolute inset-0 w-full h-full object-cover"
+                                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                    />
                                   )}
                                 </div>
-                              </div>
-                            )}
-
-                            {application.usher_skills && application.usher_skills.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {application.usher_skills.slice(0, 3).map((skill, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs border-border text-muted-foreground">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                                {application.usher_skills.length > 3 && (
-                                  <Badge variant="outline" className="text-xs border-border text-muted-foreground">
-                                    +{application.usher_skills.length - 3}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-sm sm:text-base truncate">{app.usher_name}</span>
+                                    <Badge className={`shrink-0 text-[10px] font-mono ${getStatusColor(app.status, app.gig_datetime, app.gig_duration_hours)}`}>
+                                      {getStatusText(app.status, app.gig_datetime, app.gig_duration_hours)}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="flex items-center gap-0.5">
+                                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                      <span className="text-xs text-muted-foreground">{app.usher_rating > 0 ? app.usher_rating.toFixed(1) : "0.0"}</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground/50">|</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {app.usher_experience_years} {language === "ar" ? "سنوات خبرة" : "yrs exp"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
                           </div>
-                        </div>
 
-                        {application.status === "pending" && (
-                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleApplicationAction(application.id, "rejected")}
-                              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 w-full sm:w-auto"
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              {language === "ar" ? "رفض" : "Reject"}
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApplicationAction(application.id, "approved")}
-                              className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 w-full sm:w-auto"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              {language === "ar" ? "قبول" : "Approve"}
-                            </Button>
+                          {/* Expand / Collapse */}
+                          {group.applications.length > 3 && (
+                            <div className="mt-3 text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const next = new Set(expandedGigs)
+                                  isExpanded ? next.delete(group.id) : next.add(group.id)
+                                  setExpandedGigs(next)
+                                }}
+                                className="text-xs text-accent hover:text-accent/80 font-semibold"
+                              >
+                                {isExpanded
+                                  ? (language === "ar" ? "إخفاء الباقي" : "Show Less")
+                                  : (language === "ar" ? `عرض الكل (${group.applications.length})` : `View All (${group.applications.length})`)}
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              ) : (
+                /* Per-application view when a specific gig is selected */
+                <div className="space-y-3">
+                  {filteredApps!.length === 0 ? (
+                    <Card className="bg-card border-border">
+                      <CardContent className="text-center py-8">
+                        <p className="text-muted-foreground text-sm">{language === "ar" ? "لا توجد طلبات لهذا الحدث" : "No applications for this event"}</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    filteredApps!.map((app) => (
+                      <button
+                        key={app.id}
+                        onClick={() => setSelectedApplication(app)}
+                        className="flex items-center gap-3 w-full text-left p-4 rounded-xl border border-border/60 hover:border-primary/30 hover:bg-muted/20 transition-all animate-fade-in-up"
+                      >
+                                  {/* Photo */}
+                                  <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl shrink-0 border border-border/50 relative overflow-hidden bg-muted">
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <User className="h-5 w-5 text-muted-foreground/60" />
+                                    </div>
+                                    {usherProfilePhotoUrl && (
+                                      <img
+                                        src={usherProfilePhotoUrl}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                      />
+                                    )}
+                                  </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-sm sm:text-base truncate">{app.usher_name}</span>
+                            <Badge className={`shrink-0 text-[10px] font-mono ${getStatusColor(app.status, app.gig_datetime, app.gig_duration_hours)}`}>
+                              {getStatusText(app.status, app.gig_datetime, app.gig_duration_hours)}
+                            </Badge>
                           </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        <div className="flex flex-col sm:flex-row justify-between gap-1">
-                          <span>
-                            {language === "ar" ? "تاريخ التقديم:" : "Applied on:"} {formatDate(application.applied_at)}
-                          </span>
-                          {application.reviewed_at && (
-                            <span>
-                              {language === "ar" ? "تاريخ المراجعة:" : "Reviewed on:"}{" "}
-                              {formatDate(application.reviewed_at)}
-                            </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center gap-0.5">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              <span className="text-xs text-muted-foreground">{app.usher_rating > 0 ? app.usher_rating.toFixed(1) : "0.0"}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground/50">|</span>
+                            <span className="text-xs text-muted-foreground">{app.usher_experience_years} {language === "ar" ? "سنوات خبرة" : "yrs exp"}</span>
+                          </div>
+                          {app.usher_skills && app.usher_skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {app.usher_skills.slice(0, 3).map((s, j) => (
+                                <Badge key={j} variant="outline" className="text-[10px] border-border text-muted-foreground">{s}</Badge>
+                              ))}
+                              {app.usher_skills.length > 3 && (
+                                <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">+{app.usher_skills.length - 3}</Badge>
+                              )}
+                            </div>
                           )}
                         </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Usher Detail Dialog */}
+              <Dialog open={!!selectedApplication} onOpenChange={(open) => { if (!open) setSelectedApplication(null) }}>
+                <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] p-0 overflow-hidden">
+                  {selectedApplication && (
+                    <div className="flex flex-col h-full max-h-[85vh]">
+                      <div className="px-6 pt-6 pb-2">
+                        <DialogHeader>
+                          <DialogTitle className="text-sm sm:text-base">
+                            {language === "ar" ? `ملف ${selectedApplication.usher_name}` : `${selectedApplication.usher_name}'s Profile`}
+                          </DialogTitle>
+                        </DialogHeader>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <div className="flex-1 overflow-y-auto px-6 pb-4">
+                        <UsherHistory usherId={selectedApplication.usher_id} showInModal={true} />
+                      </div>
+                      {selectedApplication.status === "pending" && (
+                        <div className="flex flex-col sm:flex-row gap-3 px-6 py-4 border-t border-border/50 bg-muted/10">
+                          <Button
+                            variant="outline"
+                            onClick={() => { handleApplicationAction(selectedApplication.id, "rejected"); setSelectedApplication(null) }}
+                            className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 flex-1 h-11"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            {language === "ar" ? "رفض الطلب" : "Reject Application"}
+                          </Button>
+                          <Button
+                            onClick={() => { handleApplicationAction(selectedApplication.id, "approved"); setSelectedApplication(null) }}
+                            className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 flex-1 h-11"
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            {language === "ar" ? "قبول الطلب" : "Approve Application"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>
         </div>
       </ProtectedRoute>
-    </ErrorBoundary>
   )
 }

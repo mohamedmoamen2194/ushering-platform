@@ -230,6 +230,9 @@ export async function POST(request: NextRequest) {
       total_ushers_needed,
       skills_required,
       is_recurring,
+      dress_code,
+      location_link,
+      additional_requirements,
     } = body
 
     // Get brand ID from the request body (this should be automatically set by the frontend)
@@ -329,13 +332,15 @@ export async function POST(request: NextRequest) {
           brand_id, title, description, location, 
           start_datetime, start_date, end_date,
           duration_hours, pay_rate, total_ushers_needed, 
-          skills_required, is_recurring
+          skills_required, is_recurring,
+          dress_code, location_link, additional_requirements
         )
         VALUES (
           ${brandId}, ${title}, ${description}, ${location}, 
           ${startDateTimeExpr}, ${start_date || null}, ${end_date || null}, 
           ${duration_hours}, ${pay_rate}, ${total_ushers_needed}, 
-          ${skills_required || []}, ${is_recurring || false}
+          ${skills_required || []}, ${is_recurring || false},
+          ${dress_code || null}, ${location_link || null}, ${additional_requirements || null}
         )
         RETURNING *
       `

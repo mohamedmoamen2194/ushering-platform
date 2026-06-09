@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { 
@@ -222,12 +221,21 @@ export function UsherHistory({ usherId, showInModal = false }: UsherHistoryProps
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <Avatar className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
-              <AvatarImage src={usherData.profilePhotoUrl || undefined} alt={usherData.name} />
-              <AvatarFallback>
-                <User className="w-6 h-6 sm:w-8 sm:h-8" />
-              </AvatarFallback>
-            </Avatar>
+            <div
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full shrink-0 border-2 border-primary/20 relative overflow-hidden bg-muted"
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/60" />
+              </div>
+              {usherData.profilePhotoUrl && (
+                <img
+                  src={usherData.profilePhotoUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full rounded-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
+            </div>
             <div className="flex-1 text-center sm:text-left">
               <CardTitle className="text-lg sm:text-xl">{usherData.name}</CardTitle>
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-2">
@@ -250,7 +258,7 @@ export function UsherHistory({ usherId, showInModal = false }: UsherHistoryProps
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <div className="text-center p-2 sm:p-0">
               <div className="text-lg sm:text-2xl font-bold text-blue-600">{performanceStats.approvalRate}%</div>
               <div className="text-xs sm:text-sm text-gray-600">{language === 'ar' ? 'معدل القبول' : 'Approval Rate'}</div>
@@ -262,12 +270,6 @@ export function UsherHistory({ usherId, showInModal = false }: UsherHistoryProps
             <div className="text-center p-2 sm:p-0">
               <div className="text-lg sm:text-2xl font-bold text-purple-600">{performanceStats.averageAttendance.toFixed(1)}%</div>
               <div className="text-xs sm:text-sm text-gray-600">{language === 'ar' ? 'متوسط الحضور' : 'Avg Attendance'}</div>
-            </div>
-            <div className="text-center p-2 sm:p-0">
-              <div className="text-lg sm:text-2xl font-bold text-neon-primary">
-                {performanceStats.totalEarnings.toLocaleString()} {language === 'ar' ? 'ج.م' : 'EGP'}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">{language === 'ar' ? 'إجمالي الأرباح' : 'Total Earnings'}</div>
             </div>
           </div>
         </CardContent>

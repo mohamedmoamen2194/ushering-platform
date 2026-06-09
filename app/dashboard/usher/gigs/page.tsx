@@ -31,26 +31,6 @@ export default function UsherGigsPage() {
     if (user?.id) fetchGigs()
   }, [user?.id])
 
-  const handleApply = async (gigId: number) => {
-    try {
-      const res = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gigId, usherId: user?.id }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        alert(language === "ar" ? "تم تقديم الطلب بنجاح!" : "Application submitted!")
-        fetchGigs()
-      } else {
-        alert(data.error || (language === "ar" ? "فشل التقديم" : "Failed to apply"))
-      }
-    } catch (e) {
-      console.error(e)
-      alert(language === "ar" ? "حدث خطأ" : "Error")
-    }
-  }
-
   const filteredGigs = gigs.filter((g: any) =>
     !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     g.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,7 +106,7 @@ export default function UsherGigsPage() {
           </p>
           {filteredGigs.map((gig, i) => (
             <div key={gig.id} className="animate-fade-in-up" style={{ animationDelay: `${0.15 + i * 0.05}s` }}>
-              <GigCard gig={gig} language={language} userRole="usher" onApply={handleApply} />
+              <GigCard gig={gig} language={language} userRole="usher" href={`/dashboard/usher/gigs/${gig.id}`} />
             </div>
           ))}
         </div>

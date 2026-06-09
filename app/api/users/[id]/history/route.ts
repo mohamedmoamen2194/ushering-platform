@@ -25,7 +25,7 @@ export async function GET(
 
     // Verify user exists and is an usher
     const userResult = await sql`
-      SELECT u.id, u.name, u.role, ush.rating, ush.total_gigs_completed, ush.profile_photo_url
+      SELECT u.id, u.name, u.role, COALESCE(ush.rating, 0) as rating, COALESCE(ush.total_gigs_completed, 0) as total_gigs_completed, ush.profile_photo_url
       FROM users u
       LEFT JOIN ushers ush ON u.id = ush.user_id
       WHERE u.id = ${userId} AND u.role = 'usher' AND u.is_active = true

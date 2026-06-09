@@ -1,9 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Clock, DollarSign, Users } from "lucide-react"
+import { MapPin, Clock, DollarSign, Users, Shirt } from "lucide-react"
 import { useTranslation } from "@/lib/i18n"
 
 interface GigCardProps {
@@ -24,13 +24,16 @@ interface GigCardProps {
     end_date?: string
     start_date_display?: string
     start_time_24h?: string
+    dress_code?: string
+    description?: string
+    additional_requirements?: string
   }
   language: "ar" | "en"
   userRole?: "usher" | "brand"
-  onApply?: (gigId: number) => void
+  href?: string
 }
 
-export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
+export function GigCard({ gig, language, userRole, href }: GigCardProps) {
   const { t, isRTL } = useTranslation(language)
 
   const formatDate = (dateString: string) => {
@@ -46,47 +49,8 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
     })
   }
 
-  const getButtonState = () => {
-    const normalizedStatus = typeof gig.application_status === 'string' ? gig.application_status.toLowerCase() : gig.application_status
-
-    // Check if gig is full
-    if (gig.approved_ushers >= gig.total_ushers_needed) {
-      return {
-        disabled: true,
-        variant: "secondary" as const,
-        text: language === "ar" ? "مكتمل" : "Full",
-      }
-    }
-
-    // Check application status
-    if (normalizedStatus === "approved") {
-      return {
-        disabled: true,
-        variant: "default" as const,
-        text: language === "ar" ? "مقبول" : "Approved",
-      }
-    }
-
-    if (normalizedStatus === "pending") {
-      return {
-        disabled: true,
-        variant: "secondary" as const,
-        text: language === "ar" ? "قيد المراجعة" : "Pending Review",
-      }
-    }
-
-    // No application or rejected - can apply
-    return {
-      disabled: false,
-      variant: "default" as const,
-      text: gig.application_status === null ? t("apply") : language === "ar" ? "تقديم طلب مرة أخرى" : "Apply Again",
-    }
-  }
-
-  const buttonState = getButtonState()
-
-  return (
-    <Card className={`w-full ${isRTL ? "text-right" : "text-left"}`} dir={isRTL ? "rtl" : "ltr"}>
+  const card = (
+    <Card className={`w-full ${href ? "cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all duration-200" : ""} ${isRTL ? "text-right" : "text-left"}`} dir={isRTL ? "rtl" : "ltr"}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -176,6 +140,13 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
           </p>
         </div>
 
+        {gig.dress_code && (
+          <div className="flex items-center gap-2 text-sm">
+            <Shirt className="h-4 w-4 text-muted-foreground" />
+            <span>{language === "ar" ? "قواعد اللبس:" : "Dress Code:"} <strong>{gig.dress_code}</strong></span>
+          </div>
+        )}
+
         {gig.skills_required && gig.skills_required.length > 0 && (
           <div>
             <p className="text-sm font-medium mb-2">{t("skillsRequired")}:</p>
@@ -189,17 +160,9 @@ export function GigCard({ gig, language, userRole, onApply }: GigCardProps) {
           </div>
         )}
 
-        {userRole === "usher" && onApply && (
-          <Button
-            onClick={() => onApply(gig.id)}
-            className="w-full"
-            disabled={buttonState.disabled}
-            variant={buttonState.variant}
-          >
-            {buttonState.text}
-          </Button>
-        )}
       </CardContent>
     </Card>
   )
+
+  return href ? <Link href={href}>{card}</Link> : card
 }

@@ -27,6 +27,7 @@ export default function UsherHome() {
   const [searchQuery, setSearchQuery] = useState("")
   const [notifs, setNotifs] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
+  const [profileLoaded, setProfileLoaded] = useState(false)
 
   useEffect(() => {
     if (user?.id) { fetchGigs(); fetchStats(); fetchNotifications(); fetchProfile() }
@@ -71,6 +72,7 @@ export default function UsherHome() {
       const data = await res.json()
       if (data.success) setProfile(data.profile || {})
     } catch (e) { console.error(e) }
+    finally { setProfileLoaded(true) }
   }
 
   const handleApply = async (gigId: number) => {
@@ -126,7 +128,7 @@ export default function UsherHome() {
       </div>
 
       {/* Urgent Alerts */}
-      {missingItems.length > 0 && (
+      {profileLoaded && missingItems.length > 0 && (
         <div className="animate-fade-in-up" style={{ animationDelay: "0.08s" }}>
           <div className="rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-amber-900/10 p-4 space-y-2">
             <div className="flex items-start gap-3">
@@ -249,7 +251,7 @@ export default function UsherHome() {
           <div className="space-y-3">
             {filteredGigs.map((gig, i) => (
               <div key={gig.id} className="animate-fade-in-up" style={{ animationDelay: `${0.15 + i * 0.05}s` }}>
-                <GigCard gig={gig} language={language} userRole="usher" onApply={handleApply} />
+                <GigCard gig={gig} language={language} userRole="usher" href={`/dashboard/usher/gigs/${gig.id}`} />
               </div>
             ))}
           </div>

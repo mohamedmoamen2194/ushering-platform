@@ -23,6 +23,7 @@ export default function BrandProfilePage() {
   const [saved, setSaved] = useState(false)
   const [brandProfile, setBrandProfile] = useState<any>(null)
   const [logo, setLogo] = useState<string | null>(null)
+  const [profileLoaded, setProfileLoaded] = useState(false)
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
@@ -58,6 +59,7 @@ export default function BrandProfilePage() {
         }))
       }
     } catch (e) { console.error(e) }
+    finally { setProfileLoaded(true) }
   }
 
   const missing: string[] = []
@@ -110,7 +112,7 @@ export default function BrandProfilePage() {
       </div>
 
       {/* Completion */}
-      <div className="animate-fade-in-up" style={{ animationDelay: "0.08s" }}>
+      {profileLoaded && <div className="animate-fade-in-up" style={{ animationDelay: "0.08s" }}>
         {isComplete ? (
           <div className="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 p-4">
             <CheckCircle className="h-5 w-5 text-secondary shrink-0" />
@@ -132,7 +134,7 @@ export default function BrandProfilePage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Logo Upload */}
       <Card className={`animate-fade-in-up ${!logo ? "border-dashed border-amber-500/30" : ""}`} style={{ animationDelay: "0.1s" }}>

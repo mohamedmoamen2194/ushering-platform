@@ -22,6 +22,7 @@ export default function UsherProfilePage() {
   const [saved, setSaved] = useState(false)
   const [stats, setStats] = useState({ totalEarnings: 0, completedGigs: 0, rating: 0 })
   const [profile, setProfile] = useState<any>(null)
+  const [profileLoaded, setProfileLoaded] = useState(false)
 
   const [form, setForm] = useState({ name: "", email: "", phone: "" })
 
@@ -59,6 +60,7 @@ export default function UsherProfilePage() {
       const data = await res.json()
       if (data.success) setProfile(data.profile || {})
     } catch (e) { /* silent */ }
+    finally { setProfileLoaded(true) }
   }
 
   const pm = profile?.payment_method
@@ -157,7 +159,7 @@ export default function UsherProfilePage() {
       </div>
 
       {/* Completion Status */}
-      <div className="animate-fade-in-up" style={{ animationDelay: "0.08s" }}>
+      {profileLoaded && <div className="animate-fade-in-up" style={{ animationDelay: "0.08s" }}>
         {isComplete ? (
           <div className="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary/5 p-4">
             <CheckCircle className="h-5 w-5 text-secondary shrink-0" />
@@ -181,7 +183,7 @@ export default function UsherProfilePage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-2.5 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
