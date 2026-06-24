@@ -218,31 +218,38 @@ export function QRScanner() {
 
         {/* Scan Result */}
         {scanResult && (
-          <div className={`p-3 rounded-md border ${
+          <div className={`p-4 rounded-md border ${
             scanResult.success 
               ? 'bg-green-50 border-green-200' 
               : 'bg-red-50 border-red-200'
           }`}>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3">
               {scanResult.success ? (
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <CheckCircle className="h-6 w-6 text-green-600 mt-0.5 shrink-0" />
               ) : (
-                <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <XCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
               )}
-              <div className="flex-1">
-                <p className={`text-sm font-medium ${
-                  scanResult.success ? 'text-green-800' : 'text-red-800'
-                }`}>
-                  {scanResult.message}
-                </p>
-                {scanResult.success && scanResult.gigTitle && (
-                  <p className="text-xs text-green-700 mt-1">
-                    {language === "ar" ? "الحدث:" : "Event:"} {scanResult.gigTitle}
-                  </p>
-                )}
-                {scanResult.success && scanResult.shiftId && (
-                  <p className="text-xs text-green-700">
-                    {language === "ar" ? "رقم المناوبة:" : "Shift ID:"} {scanResult.shiftId}
+              <div className="flex-1 min-w-0">
+                {scanResult.success && scanResult.gigTitle ? (
+                  <>
+                    <p className="text-sm font-bold text-green-800">
+                      {language === "ar"
+                        ? `تم تسجيل دخولك بنجاح إلى وظيفة ${scanResult.gigTitle}`
+                        : `You successfully entered ${scanResult.gigTitle} gig`}
+                    </p>
+                    <p className="text-xs text-green-700 mt-1 font-mono">
+                      {language === "ar" ? "في" : "at"}{" "}
+                      {new Date(scanResult.timestamp || Date.now()).toLocaleTimeString(
+                        language === "ar" ? "ar-EG" : "en-US",
+                        { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Africa/Cairo" }
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p className={`text-sm font-medium ${
+                    scanResult.success ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {scanResult.message}
                   </p>
                 )}
               </div>

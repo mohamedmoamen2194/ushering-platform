@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,11 +54,12 @@ interface Application {
 export default function ApplicationsPage() {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { language, isRTL } = useLanguage()
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("active")
-  const [gigFilter, setGigFilter] = useState<string>("all")
+  const [gigFilter, setGigFilter] = useState<string>(searchParams.get("gigId") || "all")
   const [expandedGigs, setExpandedGigs] = useState<Set<number>>(new Set())
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const { t } = useTranslation(language)
@@ -519,9 +520,9 @@ export default function ApplicationsPage() {
                                     <div className="w-full h-full flex items-center justify-center">
                                       <User className="h-5 w-5 text-muted-foreground/60" />
                                     </div>
-                                    {usherProfilePhotoUrl && (
+                                    {app.usher_profile_photo_url && (
                                       <img
-                                        src={usherProfilePhotoUrl}
+                                        src={app.usher_profile_photo_url}
                                         alt=""
                                         className="absolute inset-0 w-full h-full object-cover"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}

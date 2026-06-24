@@ -37,7 +37,31 @@ export async function GET(
       return NextResponse.json({ error: 'Gig not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ gig: result[0] })
+    const gig = result[0]
+    let dailyAttendance: any[] = []
+
+    if (userId) {
+      try {
+        const attendanceRows = await sql`
+          SELECT attendance_date, check_in_time, check_out_time, is_present, hours_worked
+          FROM daily_attendance
+          WHERE gig_id = ${gigId} AND usher_id = ${userId}
+          ORDER BY attendance_date ASC
+        `
+        dailyAttendance = attendanceRows.map((row: any) => ({
+          date: row.attendance_date,
+          check_in: row.check_in_time,
+          check_out: row.check_out_time,
+          present: row.is_present,
+          hours: row.hours_worked,
+        }))
+      } catch (e) {
+        // daily_attendance table might not exist
+        console.log("Daily attendance fetch failed (non-critical):", e)
+      }
+    }
+
+    return NextResponse.json({ gig: { ...gig, daily_attendance: dailyAttendance } })
   } catch (error) {
     console.error('Gig fetch error:', error)
     return NextResponse.json({ error: 'Failed to fetch gig' }, { status: 500 })

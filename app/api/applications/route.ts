@@ -148,9 +148,22 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { applicationId, status } = await request.json()
+    const { applicationId, status, role } = await request.json()
 
-    const result = await sql`
+    if (role !== undefined) {
+      result = await sql`
+        UPDATE applications 
+        SET role = ${role}
+        WHERE id = ${applicationId}
+        RETURNING *
+      `
+      if (result.length === 0) {
+        return NextResponse.json({ error: "Application not found" }, { status: 404 })
+      }
+      return NextResponse.json({ success: true, application: result[0] })
+    }
+
+    result = await sql`
       UPDATE applications 
       SET status = LOWER(${status}), reviewed_at = NOW()
       WHERE id = ${applicationId}

@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     const location = request.nextUrl.searchParams.get("location")
     const role = request.nextUrl.searchParams.get("role")
     const userId = request.nextUrl.searchParams.get("userId")
+    const search = request.nextUrl.searchParams.get("search")
 
     console.log("🔄 Fetching fresh gigs from database for userId:", userId, "role:", role)
 
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
           WHERE g.status = 'active' 
           AND g.start_datetime > NOW()
           ${location ? sql`AND g.location ILIKE ${`%${location}%`}` : sql``}
+          ${search ? sql`AND (g.title ILIKE ${`%${search}%`} OR g.location ILIKE ${`%${search}%`} OR b.company_name ILIKE ${`%${search}%`})` : sql``}
           AND NOT EXISTS (
             SELECT 1 FROM applications a 
             WHERE a.gig_id = g.id 
@@ -125,6 +127,7 @@ export async function GET(request: NextRequest) {
           WHERE g.status = 'active' 
           AND g.start_datetime > NOW()
           ${location ? sql`AND g.location ILIKE ${`%${location}%`}` : sql``}
+          ${search ? sql`AND (g.title ILIKE ${`%${search}%`} OR g.location ILIKE ${`%${search}%`} OR b.company_name ILIKE ${`%${search}%`})` : sql``}
           ORDER BY g.start_datetime ASC
         `
       }

@@ -12,6 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
     // Get query parameters for filtering
     const status = request.nextUrl.searchParams.get("status") // 'pending', 'approved', 'rejected', 'all'
     const includeRejected = request.nextUrl.searchParams.get("includeRejected") === "true"
+    const gigId = request.nextUrl.searchParams.get("gigId") // filter by specific gig
 
     // Build the status filter
     let statusFilter = sql``
@@ -20,6 +21,12 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
     } else if (!includeRejected) {
       // By default, exclude rejected applications
       statusFilter = sql`AND a.status != 'rejected'`
+    }
+
+    // Build gig filter
+    let gigFilter = sql``
+    if (gigId) {
+      gigFilter = sql`AND g.id = ${gigId}`
     }
 
     // Get all applications for gigs created by this brand with contact info
@@ -35,6 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
           a.status,
           a.applied_at,
           a.reviewed_at,
+          a.role,
           g.title as gig_title,
           g.location as gig_location,
           g.start_datetime as gig_datetime,
@@ -53,6 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
         LEFT JOIN ushers ush ON u.id = ush.user_id
         WHERE g.brand_id = ${brandId}
         ${statusFilter}
+        ${gigFilter}
         ORDER BY 
           CASE a.status 
             WHEN 'pending' THEN 1 
@@ -72,6 +81,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
             a.status,
             a.applied_at,
             a.reviewed_at,
+            a.role,
             g.title as gig_title,
             g.location as gig_location,
             g.datetime as gig_datetime,
@@ -90,6 +100,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
           LEFT JOIN ushers ush ON u.id = ush.user_id
           WHERE g.brand_id = ${brandId}
           ${statusFilter}
+          ${gigFilter}
           ORDER BY 
             CASE a.status 
               WHEN 'pending' THEN 1 
@@ -125,6 +136,7 @@ export async function GET(request: NextRequest, { params }: { params: { brandId:
           JOIN users u ON a.usher_id = u.id
           WHERE g.brand_id = ${brandId}
           ${statusFilter}
+          ${gigFilter}
           ORDER BY 
             CASE a.status 
               WHEN 'pending' THEN 1 

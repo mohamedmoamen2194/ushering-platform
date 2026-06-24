@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, Briefcase, FileText, MessageCircle, Phone, Users, User, Wallet } from "lucide-react"
+import { LayoutDashboard, Briefcase, FileText, MessageCircle, Phone, Users, User, Wallet, QrCode } from "lucide-react"
 
 interface NavItem {
   href: string
@@ -14,7 +14,7 @@ interface NavItem {
 const usherNav: NavItem[] = [
   { href: "/dashboard/usher", label: "Home", arLabel: "الرئيسية", icon: <LayoutDashboard className="h-5 w-5" /> },
   { href: "/dashboard/usher/gigs", label: "Gigs", arLabel: "الوظائف", icon: <Briefcase className="h-5 w-5" /> },
-  { href: "/dashboard/usher/applications", label: "Apps", arLabel: "طلباتي", icon: <FileText className="h-5 w-5" /> },
+  { href: "/dashboard/usher/scan", label: "Scan", arLabel: "مسح", icon: <QrCode className="h-5 w-5" /> },
   { href: "/dashboard/usher/chats", label: "Chats", arLabel: "المحادثات", icon: <MessageCircle className="h-5 w-5" /> },
   { href: "/dashboard/usher/payment", label: "Payment", arLabel: "الدفع", icon: <Wallet className="h-5 w-5" /> },
   { href: "/dashboard/usher/profile", label: "Profile", arLabel: "الملف", icon: <User className="h-5 w-5" /> },

@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/auth-context"
 import {
   MapPin, Clock, DollarSign, Users, Shirt, ArrowLeft,
-  Briefcase, Calendar, ExternalLink, FileText, Map,
+  Briefcase, Calendar, ExternalLink, FileText, Map, CheckCheck,
 } from "lucide-react"
 
 export default function GigDetailPage() {
@@ -72,6 +72,75 @@ export default function GigDetailPage() {
     return new Date(d).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", {
       year: "numeric", month: "long", day: "numeric",
     })
+  }
+
+  const formatTime = (t: string | null | undefined) => {
+    if (!t) return ""
+    const d = new Date(t)
+    if (isNaN(d.getTime())) return ""
+    return d.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", {
+      hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Africa/Cairo",
+    })
+  }
+
+  const parseDateStr = (val: any): string | null => {
+    if (!val) return null
+    if (typeof val === "string") return val.split("T")[0] || val
+    if (val instanceof Date) return val.toISOString().split("T")[0]
+    return null
+  }
+
+  const parseAttendance = (val: any): any[] => {
+    if (!val) return []
+    if (Array.isArray(val)) return val
+    if (typeof val === "string") { try { return JSON.parse(val) } catch { return [] } }
+    return []
+  }
+
+  const getAttendanceDays = () => {
+    if (!gig) return []
+    const days: { label: string; checked: boolean; time: string }[] = []
+    const rawDt = gig.start_datetime || gig.datetime
+    let startDate = gig.start_date || parseDateStr(rawDt)
+    let endDate = gig.end_date || startDate
+
+    const attendanceData = parseAttendance(gig.daily_attendance)
+    const attendanceMap: Record<string, any> = {}
+    attendanceData.forEach((da: any) => {
+      const dateKey = parseDateStr(da.date || da.attendance_date)
+      if (dateKey) attendanceMap[dateKey] = da
+    })
+
+    // If no date range from gig, use earliest and latest attendance dates
+    if (!startDate && attendanceData.length > 0) {
+      const dates = attendanceData.map((da: any) => parseDateStr(da.date || da.attendance_date)).filter(Boolean)
+      if (dates.length > 0) {
+        dates.sort()
+        startDate = dates[0]
+        endDate = dates[dates.length - 1]
+      }
+    }
+
+    if (!startDate) return days
+
+    const start = new Date(startDate + "T00:00:00")
+    const end = new Date(endDate + "T00:00:00")
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return days
+
+    let dayIndex = 1
+    const current = new Date(start)
+    while (current <= end) {
+      const dateKey = current.toISOString().split("T")[0]
+      const record = attendanceMap[dateKey]
+      days.push({
+        label: `${language === "ar" ? "اليوم" : "Day"} ${dayIndex}`,
+        checked: record?.present === true || !!record?.check_in,
+        time: record?.check_in ? formatTime(record.check_in) : "",
+      })
+      current.setDate(current.getDate() + 1)
+      dayIndex++
+    }
+    return days
   }
 
   const getStatusBadge = (status: string) => {
@@ -251,6 +320,59 @@ export default function GigDetailPage() {
               {language === "ar" ? "متطلبات إضافية" : "Additional Requirements"}
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{gig.additional_requirements}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Daily Attendance */}
+      {user?.id && gig && gig.application_status === "approved" && (
+        <Card>
+          <CardContent className="p-5">
+            <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <CheckCheck className="h-4 w-4 text-secondary" />
+              {language === "ar" ? "الحضور اليومي" : "Daily Attendance"}
+            </h2>
+            {(() => {
+              const days = getAttendanceDays()
+              if (days.length === 0) {
+                return (
+                  <p className="text-xs text-muted-foreground/60">
+                    {language === "ar" ? "بيانات الحضور غير متاحة" : "Attendance data not available"}
+                  </p>
+                )
+              }
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {days.map((day, di) => (
+                    <div
+                      key={di}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono ${
+                        day.checked
+                          ? "bg-green-100/60 text-green-700 dark:bg-green-900/10 dark:text-green-400 border border-green-200/50 dark:border-green-800/30"
+                          : "bg-muted/30 text-muted-foreground/60 border border-border/30"
+                      }`}
+                    >
+                      {day.checked ? (
+                        <CheckCheck className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{day.label}</p>
+                        {day.checked && day.time && (
+                          <p className="text-[10px] opacity-75">{day.time}</p>
+                        )}
+                        {!day.checked && (
+                          <p className="text-[10px] opacity-50">
+                            {language === "ar" ? "لم يسجل" : "No show"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </CardContent>
         </Card>
       )}
