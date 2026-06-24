@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import path from 'path'
 import { sql } from '@/lib/db'
-import { put, del } from '@vercel/blob'
+import { put } from '@vercel/blob'
 
 async function uploadToStorage(buffer: Buffer, fileName: string, fileType: string): Promise<string> {
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(fileName, buffer, { contentType: fileType, access: 'public' })
-    return blob.url
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
+    throw new Error("BLOB_READ_WRITE_TOKEN is not configured. Add it to your Vercel project environment variables.")
   }
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'photos')
-  if (!existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true })
-  const filePath = path.join(uploadDir, fileName)
-  await writeFile(filePath, buffer)
-  return `/uploads/photos/${fileName}`
+  const blob = await put(fileName, buffer, { contentType: fileType, access: 'public', token })
+  return blob.url
 }
 
 export async function POST(request: NextRequest) {
@@ -88,10 +82,14 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Photo upload error:', error)
-    if (error instanceof Error && error.message.includes('relation') && error.message.includes('does not exist')) {
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    if (msg.includes('relation') && msg.includes('does not exist')) {
       return NextResponse.json({ error: "Database tables not found", message: "Run the migration script first." }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Failed to upload photo', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
+    if (msg.includes('BLOB_READ_WRITE_TOKEN')) {
+      return NextResponse.json({ error: msg }, { status: 500 })
+    }
+    return NextResponse.json({ error: 'Failed to upload photo', details: msg }, { status: 500 })
   }
 }
 
