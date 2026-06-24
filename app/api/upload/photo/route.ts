@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 import { sql } from '@/lib/db'
 import { put } from '@vercel/blob'
 
