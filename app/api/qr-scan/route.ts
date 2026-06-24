@@ -6,12 +6,21 @@ import { sql } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const { qrCodeToken, usherId, action } = await request.json()
+    let { qrCodeToken, usherId, action } = await request.json()
 
     if (!qrCodeToken || !usherId || !action) {
       return NextResponse.json({ 
         error: "QR code token, usher ID, and action are required" 
       }, { status: 400 })
+    }
+
+    // If the token is a full URL (from camera scan), extract the token parameter
+    if (qrCodeToken.startsWith("http://") || qrCodeToken.startsWith("https://")) {
+      try {
+        const parsedUrl = new URL(qrCodeToken)
+        const tokenParam = parsedUrl.searchParams.get("token")
+        if (tokenParam) qrCodeToken = tokenParam
+      } catch {}
     }
 
     if (!['check_in', 'check_out'].includes(action)) {

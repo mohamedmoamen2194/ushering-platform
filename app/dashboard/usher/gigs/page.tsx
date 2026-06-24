@@ -107,7 +107,12 @@ export default function UsherGigsPage() {
   const parseDateStr = (val: any): string | null => {
     if (!val) return null
     if (typeof val === "string") return val.split("T")[0] || val
-    if (val instanceof Date) return val.toISOString().split("T")[0]
+    if (val instanceof Date) {
+      const y = val.getFullYear()
+      const m = String(val.getMonth() + 1).padStart(2, "0")
+      const d = String(val.getDate()).padStart(2, "0")
+      return `${y}-${m}-${d}`
+    }
     return null
   }
 

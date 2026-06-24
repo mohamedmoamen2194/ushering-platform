@@ -85,8 +85,16 @@ export default function GigDetailPage() {
 
   const parseDateStr = (val: any): string | null => {
     if (!val) return null
-    if (typeof val === "string") return val.split("T")[0] || val
-    if (val instanceof Date) return val.toISOString().split("T")[0]
+    if (typeof val === "string") {
+      if (val.includes("T")) {
+        // Convert UTC timestamp to Cairo date
+        return new Date(val).toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" })
+      }
+      return val.split("T")[0] || val
+    }
+    if (val instanceof Date) {
+      return val.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" })
+    }
     return null
   }
 
@@ -101,8 +109,8 @@ export default function GigDetailPage() {
     if (!gig) return []
     const days: { label: string; checked: boolean; time: string }[] = []
     const rawDt = gig.start_datetime || gig.datetime
-    let startDate = gig.start_date || parseDateStr(rawDt)
-    let endDate = gig.end_date || startDate
+    let startDate = parseDateStr(gig.start_date || rawDt)
+    let endDate = parseDateStr(gig.end_date) || startDate
 
     const attendanceData = parseAttendance(gig.daily_attendance)
     const attendanceMap: Record<string, any> = {}
@@ -130,7 +138,10 @@ export default function GigDetailPage() {
     let dayIndex = 1
     const current = new Date(start)
     while (current <= end) {
-      const dateKey = current.toISOString().split("T")[0]
+      const y = current.getFullYear()
+      const m = String(current.getMonth() + 1).padStart(2, "0")
+      const d = String(current.getDate()).padStart(2, "0")
+      const dateKey = `${y}-${m}-${d}`
       const record = attendanceMap[dateKey]
       days.push({
         label: `${language === "ar" ? "اليوم" : "Day"} ${dayIndex}`,

@@ -103,6 +103,11 @@ const config: Config = {
           "50%": { transform: "rotate(180deg) scale(1.2)" },
           "100%": { transform: "rotate(360deg) scale(1)" },
         },
+        "scan-line": {
+          "0%": { top: "0%" },
+          "50%": { top: "calc(100% - 2px)" },
+          "100%": { top: "0%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +116,7 @@ const config: Config = {
         "neon-pulse": "neon-pulse 1.5s ease-in-out infinite",
         "liquid-fill": "liquid-fill 1s ease-out forwards",
         "theme-spin": "theme-spin 0.4s ease-out",
+        "scan-line": "scan-line 2.5s ease-in-out infinite",
       },
     },
   },

@@ -144,7 +144,55 @@ export async function POST(request: NextRequest) {
         EXECUTE FUNCTION update_usher_overall_rating()
     `
 
-    // Step 9: Insert default notification preferences for existing users
+    // Step 9: Add photo upload columns to ushers table
+    console.log('📝 Adding photo upload columns to ushers table...')
+    await sql`
+      ALTER TABLE ushers ADD COLUMN IF NOT EXISTS photo_uploaded_at TIMESTAMPTZ
+    `
+    await sql`
+      ALTER TABLE ushers ADD COLUMN IF NOT EXISTS id_photo_url TEXT
+    `
+    await sql`
+      ALTER TABLE ushers ADD COLUMN IF NOT EXISTS id_photo_uploaded_at TIMESTAMPTZ
+    `
+    await sql`
+      ALTER TABLE ushers ADD COLUMN IF NOT EXISTS payment_method JSONB DEFAULT '{}'::jsonb
+    `
+    await sql`
+      ALTER TABLE ushers ADD COLUMN IF NOT EXISTS payment_method_set BOOLEAN DEFAULT FALSE
+    `
+
+    // Step 10: Add logo columns to brands table
+    console.log('📝 Adding logo columns to brands table...')
+    await sql`
+      ALTER TABLE brands ADD COLUMN IF NOT EXISTS logo_url TEXT
+    `
+    await sql`
+      ALTER TABLE brands ADD COLUMN IF NOT EXISTS logo_uploaded_at TIMESTAMPTZ
+    `
+    await sql`
+      ALTER TABLE brands ADD COLUMN IF NOT EXISTS company_description TEXT
+    `
+    await sql`
+      ALTER TABLE brands ADD COLUMN IF NOT EXISTS company_website TEXT
+    `
+
+    // Step 11: Create file_uploads table
+    console.log('📝 Creating file_uploads table...')
+    await sql`
+      CREATE TABLE IF NOT EXISTS file_uploads (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        file_name VARCHAR(255) NOT NULL,
+        file_path TEXT NOT NULL,
+        file_size INT NOT NULL DEFAULT 0,
+        file_type VARCHAR(100),
+        upload_purpose VARCHAR(50),
+        uploaded_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `
+
+    // Step 12: Insert default notification preferences for existing users
     console.log('📝 Creating default notification preferences for existing users...')
     await sql`
       INSERT INTO notification_preferences (user_id)
@@ -179,7 +227,7 @@ export async function POST(request: NextRequest) {
         is_nullable
       FROM information_schema.columns 
       WHERE table_name = 'ushers' 
-        AND column_name IN ('attendance_rating', 'brand_rating', 'profile_photo_url')
+        AND column_name IN ('attendance_rating', 'brand_rating', 'profile_photo_url', 'photo_uploaded_at', 'id_photo_url', 'id_photo_uploaded_at', 'payment_method', 'payment_method_set')
       ORDER BY column_name
     `
 

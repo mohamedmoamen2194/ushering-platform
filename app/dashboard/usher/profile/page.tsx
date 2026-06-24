@@ -130,11 +130,13 @@ export default function UsherProfilePage() {
       } else {
         setUploading(null)
         setUploadProgress(0)
+        alert(data.error || data.message || (language === "ar" ? "فشل رفع الصورة" : "Failed to upload image"))
       }
     } catch (e) {
       clearInterval(progressInterval)
       setUploading(null)
       setUploadProgress(0)
+      alert(language === "ar" ? "حدث خطأ في رفع الصورة" : "An error occurred while uploading")
     }
   }
 
