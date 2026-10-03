@@ -58,21 +58,11 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        neon: {
-          primary: "#ff0080",
-          secondary: "#aaff00",
-          accent: "#00f5ff",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      boxShadow: {
-        "neon-primary": "0 0 10px rgba(255,0,128,0.5), 0 0 20px rgba(255,0,128,0.3)",
-        "neon-secondary": "0 0 10px rgba(170,255,0,0.5), 0 0 20px rgba(170,255,0,0.3)",
-        "neon-accent": "0 0 10px rgba(0,245,255,0.5), 0 0 20px rgba(0,245,255,0.3)",
       },
       keyframes: {
         "accordion-down": {
@@ -83,40 +73,10 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "neon-flicker": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.85" },
-          "92%": { opacity: "1" },
-          "93%": { opacity: "0.7" },
-          "94%": { opacity: "1" },
-        },
-        "neon-pulse": {
-          "0%, 100%": { opacity: "1", transform: "scale(1)" },
-          "50%": { opacity: "0.6", transform: "scale(0.85)" },
-        },
-        "liquid-fill": {
-          from: { transform: "translateY(100%)" },
-          to: { transform: "translateY(0%)" },
-        },
-        "theme-spin": {
-          "0%": { transform: "rotate(0deg) scale(1)" },
-          "50%": { transform: "rotate(180deg) scale(1.2)" },
-          "100%": { transform: "rotate(360deg) scale(1)" },
-        },
-        "scan-line": {
-          "0%": { top: "0%" },
-          "50%": { top: "calc(100% - 2px)" },
-          "100%": { top: "0%" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "neon-flicker": "neon-flicker 3s ease-in-out infinite",
-        "neon-pulse": "neon-pulse 1.5s ease-in-out infinite",
-        "liquid-fill": "liquid-fill 1s ease-out forwards",
-        "theme-spin": "theme-spin 0.4s ease-out",
-        "scan-line": "scan-line 2.5s ease-in-out infinite",
       },
     },
   },
